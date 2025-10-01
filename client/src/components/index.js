@@ -6,6 +6,10 @@ import Footer from './Footer';
 import ScrollToTop from './ScrollToTop';
 import MoblieMenu from './MobileMenu';
 import MobileProfileBar from './MobileProfileBar';
+import Stars from './Stars';
+import ProductsContainer from './ProductsContainer';
+import TopPicks from './TopPicks';
+import About from './About';
 
 export {
   Header,
@@ -16,4 +20,8 @@ export {
   ScrollToTop,
   MoblieMenu,
   MobileProfileBar,
+  Stars,
+  ProductsContainer,
+  TopPicks,
+  About,
 };

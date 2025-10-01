@@ -94,7 +94,7 @@ const ImageTitle = styled.h1`
   justify-content: center;
   overflow: none;
   align-items: center;
-  width: 77%;
+  width: 85%;
   height: 35vh;
   position: absolute;
   transform: rotate(-90deg);
