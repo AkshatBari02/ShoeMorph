@@ -4,28 +4,27 @@ import icon from '../assets/utils/yeezy.svg';
 import { Link } from 'react-router-dom';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { ProductsContainer } from '../components';
-// import { useQuery } from '@apollo/client';
-// import {
-//   GET_DEFAULT_TOP_PICKS,
-//   GET_USER_TOP_PICKS,
-// } from '../graphql/Queries/userQueries';
+import { useQuery } from '@apollo/client';
+import {
+  GET_DEFAULT_TOP_PICKS,
+  GET_USER_TOP_PICKS,
+} from '../graphql/Queries/userQueries';
 import Loading from '../assets/mui/Loading';
-// import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import MuiError from '../assets/mui/Alert';
 import { mobile } from '../responsive';
-import { dummy_data } from '../utils/dummy_data';
 
 const TopPicks = (props) => {
-//   const { userInfo } = useSelector((state) => state.user);
+  const { userInfo } = useSelector((state) => state.user);
   const { cartPage } = props;
 
-//   const query = userInfo ? GET_USER_TOP_PICKS : GET_DEFAULT_TOP_PICKS;
+  const query = userInfo ? GET_USER_TOP_PICKS : GET_DEFAULT_TOP_PICKS;
 
-//   const { data, error, loading } = useQuery(query);
+  const { data, error, loading } = useQuery(query);
 
-//   const mapValue = userInfo
-//     ? data?.getTopPicksProducts
-//     : data?.getDefaultTopPicks;
+  const mapValue = userInfo
+    ? data?.getTopPicksProducts
+    : data?.getDefaultTopPicks;
 
   return (
     <Wrapper>
@@ -40,16 +39,13 @@ const TopPicks = (props) => {
           </ViewButton>
         </Link>
       </HeaderContainer>
-      {/* {loading ? ( */}
-      {false ? (
+      {loading ? (
         <Loading />
-    //   ) : error ? (
-      ) : false ? (
+      ) : error ? (
         <MuiError type='error' value={'Something went wrong..'} />
       ) : (
         <ItemsContainer cartPage={cartPage && cartPage}>
-          {/* {mapValue?.map((item) => ( */}
-          {dummy_data.map((item) => (
+          {mapValue?.map((item) => (
             <ProductsContainer key={item.id} {...item} />
           ))}
         </ItemsContainer>

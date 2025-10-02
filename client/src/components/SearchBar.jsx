@@ -3,17 +3,17 @@ import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import SearchIcon from '@mui/icons-material/Search';
 import { ClickAwayListener } from '@mui/material';
-// import { useEffect } from 'react';
-// import { useQuery } from '@apollo/client';
-// import { GET_PRODUCTS_BY_TITLE } from '../graphql/Queries/productQueries';
+import { useEffect } from 'react';
+import { useQuery } from '@apollo/client';
+import { GET_PRODUCTS_BY_TITLE } from '../graphql/Queries/productQueries';
 const SearchBar = ({ display }) => {
   const [filteredData, setFilteredData] = useState([]);
   const [searchValue, setSearchValue] = useState('');
 
-//   const { data: searchData } = useQuery(GET_PRODUCTS_BY_TITLE, {
-//     variables: { searchQuery: searchValue },
-//     skip: !searchValue,
-//   });
+  const { data: searchData } = useQuery(GET_PRODUCTS_BY_TITLE, {
+    variables: { searchQuery: searchValue },
+    skip: !searchValue,
+  });
 
   const onChange = (e) => {
     setSearchValue(e.target.value);
@@ -24,13 +24,13 @@ const SearchBar = ({ display }) => {
     setSearchValue('');
   };
 
-//   useEffect(() => {
-//     if (searchValue === '') {
-//       setFilteredData([]);
-//     } else {
-//       setFilteredData(searchData?.getProductsByTitle);
-//     }
-//   }, [searchData?.getProductsByTitle, searchValue]);
+  useEffect(() => {
+    if (searchValue === '') {
+      setFilteredData([]);
+    } else {
+      setFilteredData(searchData?.getProductsByTitle);
+    }
+  }, [searchData?.getProductsByTitle, searchValue]);
 
   return (
     <Wrapper display={display}>
@@ -42,7 +42,7 @@ const SearchBar = ({ display }) => {
           type='text'
           value={searchValue}
           placeholder='Search for brand or model'
-        //   data={searchData}
+          data={searchData}
           onChange={onChange}
         />
       </InputContainer>

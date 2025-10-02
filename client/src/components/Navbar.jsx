@@ -8,21 +8,21 @@ import UserMenu from '../assets/mui/UserMenu';
 import { mobile } from '../responsive';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Logo, SearchBar } from '../components';
-// import { useSelector, useDispatch } from 'react-redux';
-// import { GET_USER_CART } from '../graphql/Queries/cartQueries';
-// import { useQuery } from '@apollo/client';
-// import { toggleMobileMenu } from '../features/filterSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { GET_USER_CART } from '../graphql/Queries/cartQueries';
+import { useQuery } from '@apollo/client';
+import { toggleMobileMenu } from '../features/filterSlice';
 const Navbar = () => {
-//   const { userInfo } = useSelector((state) => state.user);
-//   const { data } = useQuery(GET_USER_CART, {
-//     variables: { userId: userInfo?.id },
-//     skip: !userInfo,
-//   });
+  const { userInfo } = useSelector((state) => state.user);
+  const { data } = useQuery(GET_USER_CART, {
+    variables: { userId: userInfo?.id },
+    skip: !userInfo,
+  });
 
   // eslint-disable-next-line
   const display = new Boolean();
 
-//   const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   return (
     <Wrapper>
@@ -65,8 +65,7 @@ const Navbar = () => {
                 sx={{ color: 'var(--clr-mocha)' }}
                 color='primary'
                 style={{ paddingRight: '10px', marginTop: '3px' }}
-                // badgeContent={data?.getUserCart.cartProducts.length || 0}
-                badgeContent={0}
+                badgeContent={data?.getUserCart.cartProducts.length || 0}
               >
                 <Icon>
                   <ShoppingCartOutlinedIcon style={{ color: 'black' }} />
@@ -79,7 +78,7 @@ const Navbar = () => {
       </UserContainer>
       <MobileMenu>
         <MenuIcon
-        //   onClick={() => dispatch(toggleMobileMenu())}
+          onClick={() => dispatch(toggleMobileMenu())}
           style={{ cursor: 'pointer', fontSize: '36px' }}
         />
       </MobileMenu>

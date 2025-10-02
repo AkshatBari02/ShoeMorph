@@ -10,6 +10,18 @@ import Stars from './Stars';
 import ProductsContainer from './ProductsContainer';
 import TopPicks from './TopPicks';
 import About from './About';
+import SizeChart from './SizeChart';
+import BrandChart from './BrandChart';
+import PriceChart from './PriceChart';
+import ColorChart from './ColorChart';
+import Sort from './Sort';
+import ShopHeader from './ShopHeader';
+import FilterTags from './FilterTags';
+import FilterTag from './FilterTag';
+import ProductList from './ProductList';
+import GridView from './GridView';
+import ListView from './ListView';
+import LeftSidebar from './LeftSidebar';
 
 export {
   Header,
@@ -24,4 +36,16 @@ export {
   ProductsContainer,
   TopPicks,
   About,
+  SizeChart,
+  ColorChart,
+  BrandChart,
+  PriceChart,
+  Sort,
+  ShopHeader,
+  FilterTags,
+  FilterTag,
+  ProductList,
+  LeftSidebar,
+  GridView,
+  ListView,
 };

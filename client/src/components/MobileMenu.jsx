@@ -1,40 +1,39 @@
 import React from 'react';
-// import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 
-// import { toggleMobileMenu } from '../features/filterSlice';
+import { toggleMobileMenu } from '../features/filterSlice';
 import { Logo, SearchBar } from './';
 import { Link } from 'react-router-dom';
-// import { useLogout } from '../utils/customHooks';
+import { useLogout } from '../utils/customHooks';
 
 const MoblieMenu = () => {
-//   const { mobileMenu } = useSelector((state) => state.filter);
-//   const { userInfo } = useSelector((state) => state.user);
-//   const dispatch = useDispatch();
+  const { mobileMenu } = useSelector((state) => state.filter);
+  const { userInfo } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
 
-//   const { handleLogout } = useLogout();
+  const { handleLogout } = useLogout();
 
-//   const logoutHandler = () => {
-//     handleLogout();
-//     dispatch(toggleMobileMenu());
-//   };
+  const logoutHandler = () => {
+    handleLogout();
+    dispatch(toggleMobileMenu());
+  };
 
   // eslint-disable-next-line
   const display = new Boolean();
 
   return (
     <>
-      {/* {mobileMenu && ( */}
-      {true && (
+      {mobileMenu && (
         <Wrapper>
           <Header>
             <Logo />
             <CloseIcon
               className='close-icon'
-            //   onClick={() => dispatch(toggleMobileMenu())}
+              onClick={() => dispatch(toggleMobileMenu())}
               style={{ color: 'red' }}
             />
           </Header>
@@ -42,34 +41,32 @@ const MoblieMenu = () => {
           <LinksContainer>
             <MenuLink>
               <Link
-            //   onClick={() => dispatch(toggleMobileMenu())}
+              onClick={() => dispatch(toggleMobileMenu())}
               to='/'>
                 Home
               </Link>
             </MenuLink>
             <MenuLink>
               <Link
-            //   onClick={() => dispatch(toggleMobileMenu())}
+              onClick={() => dispatch(toggleMobileMenu())}
               to='/shop'>
                 Shop
               </Link>
             </MenuLink>
-            {/* {userInfo && ( */}
-            {true && (
+            {userInfo && (
               <MenuLink>
                 <Link
-                //   onClick={() => dispatch(toggleMobileMenu())}
+                  onClick={() => dispatch(toggleMobileMenu())}
                   to='/profile'
                 >
                   Profile
                 </Link>
               </MenuLink>
             )}
-            {/* {userInfo && userInfo.isAdmin && ( */}
-            {true && (
+            {userInfo && userInfo.isAdmin && (
               <MenuLink>
                 <Link
-                //   onClick={() => dispatch(toggleMobileMenu())}
+                  onClick={() => dispatch(toggleMobileMenu())}
                   to='/new-item'
                 >
                   Admin Panel
@@ -78,11 +75,10 @@ const MoblieMenu = () => {
             )}
           </LinksContainer>
           <UserLinks>
-            {/* {userInfo ? ( */}
-            {true ? (
+            {userInfo ? (
               <MenuLink>
                 <Link
-                //   onClick={logoutHandler}
+                  onClick={logoutHandler}
                   to='/'
                   style={{ color: 'var(--clr-primary-2)' }}
                 >
@@ -93,7 +89,7 @@ const MoblieMenu = () => {
             ) : (
               <MenuLink>
                 <Link
-                //   onClick={() => dispatch(toggleMobileMenu())}
+                  onClick={() => dispatch(toggleMobileMenu())}
                   to='/login'
                   style={{ color: 'var(--clr-primary-2)' }}
                 >
@@ -102,11 +98,10 @@ const MoblieMenu = () => {
                 </Link>
               </MenuLink>
             )}
-            {/* {userInfo && ( */}
-            {true && (
+            {userInfo && (
               <MenuLink>
                 <Link
-                //   onClick={() => dispatch(toggleMobileMenu())}
+                  onClick={() => dispatch(toggleMobileMenu())}
                   to='/cart'
                   style={{ color: 'var(--clr-primary-2)' }}
                 >
