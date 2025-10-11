@@ -22,6 +22,8 @@ import ProductList from './ProductList';
 import GridView from './GridView';
 import ListView from './ListView';
 import LeftSidebar from './LeftSidebar';
+import OrderSum from './OrderSum';
+import CartItems from './CartItems';
 
 export {
   Header,
@@ -48,4 +50,6 @@ export {
   LeftSidebar,
   GridView,
   ListView,
+  OrderSum,
+  CartItems,
 };
