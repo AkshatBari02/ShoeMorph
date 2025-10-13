@@ -24,6 +24,7 @@ import ListView from './ListView';
 import LeftSidebar from './LeftSidebar';
 import OrderSum from './OrderSum';
 import CartItems from './CartItems';
+import ProtectedRoute from './ProtectedRoute';
 
 export {
   Header,
@@ -52,4 +53,5 @@ export {
   ListView,
   OrderSum,
   CartItems,
+  ProtectedRoute,
 };
