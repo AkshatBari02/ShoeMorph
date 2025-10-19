@@ -5,7 +5,7 @@ import jwtDecode from 'jwt-decode';
 import { useQuery } from '@apollo/client';
 
 import { Footer, MoblieMenu, ProtectedRoute } from './components';
-import { HomePage, ShopPage, ProductPage, CartPage, ErrorPage, LoginPage, RegisterPage } from './pages';
+import { HomePage, ShopPage, ProductPage, CartPage, ErrorPage, LoginPage, RegisterPage, OrderPage } from './pages';
 
 import { GET_USER_DETAILS } from './graphql/Queries/userQueries';
 import { useLogout } from './utils/customHooks';
@@ -57,6 +57,12 @@ function App() {
             <ProtectedRoute>
               <RegisterPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/order/'
+          element={
+              <OrderPage />
           }
         />
       </Routes>
