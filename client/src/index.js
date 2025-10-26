@@ -2,11 +2,18 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import { BrowserRouter } from 'react-router-dom';
-import { createTheme, ThemeProvider } from '@mui/material';
 import { Provider } from 'react-redux';
 import { store } from './store';
-import { ScrollToTop } from './components';
+import { setContext } from '@apollo/client/link/context';
+import {
+  ApolloProvider,
+  InMemoryCache,
+  ApolloClient,
+  createHttpLink,
+} from '@apollo/client';
+import ScrollToTop from './components/ScrollToTop';
+import { BrowserRouter } from 'react-router-dom';
+import { createTheme, ThemeProvider } from '@mui/material';
 
 const theme = createTheme({
   palette: {
@@ -16,9 +23,37 @@ const theme = createTheme({
   },
 });
 
+const httpLink = createHttpLink({
+  uri: 'http://localhost:5000/graphql',
+});
+
+const authLink = setContext(() => {
+  const token = localStorage.getItem('jwtToken');
+  return {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : '',
+    },
+  };
+});
+
+const cache = new InMemoryCache({
+  typePolicies: {
+    Shipping: {
+      merge: true,
+    },
+  },
+});
+
+const client = new ApolloClient({
+  link: authLink.concat(httpLink),
+  cache,
+});
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
 root.render(
-  <Provider store={store}>
+  <ApolloProvider client={client}>
+    <Provider store={store}>
       <BrowserRouter>
         <ScrollToTop />
         <ThemeProvider theme={theme}>
@@ -26,4 +61,5 @@ root.render(
         </ThemeProvider>
       </BrowserRouter>
     </Provider>
+  </ApolloProvider>
 );
