@@ -6,7 +6,7 @@ import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 
 import { toggleMobileMenu } from '../features/filterSlice';
-import { Logo, SearchBar } from './';
+import { Logo, SearchBar } from '.';
 import { Link } from 'react-router-dom';
 import { useLogout } from '../utils/customHooks';
 

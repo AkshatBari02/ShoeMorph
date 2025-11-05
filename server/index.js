@@ -12,9 +12,6 @@ const app = express();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 app.use(express.static(path.join(__dirname, '../client/build')));
 
-app.get('*', function (req, res) {
-  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
-});
 // app.use(express.static('public'));
 
 // app.get('*', (req, res) => {
@@ -30,9 +27,12 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   await apolloServer.start();
-  apolloServer.applyMiddleware({ app: app });
+  apolloServer.applyMiddleware({ app: app, path: '/graphql', cors: true });
   try {
     await connectDB(process.env.MONGO_URI);
+    app.get('*', function (req, res) {
+      res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+    });
     app.listen(PORT, () => console.log('Server is running'));
   } catch (error) {
     throw new Error(error);

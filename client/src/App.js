@@ -4,14 +4,34 @@ import { useDispatch, useSelector } from 'react-redux';
 import jwtDecode from 'jwt-decode';
 import { useQuery } from '@apollo/client';
 
-import { Footer, MoblieMenu, ProtectedRoute } from './components';
-import { HomePage, ShopPage, ProductPage, CartPage, ErrorPage, LoginPage, RegisterPage, OrderPage } from './pages';
+import {
+  CartPage,
+  ErrorPage,
+  HomePage,
+  LoginPage,
+  OrderPage,
+  ProductPage,
+  RegisterPage,
+  ShopPage,
+} from './pages';
 
-import { GET_USER_DETAILS } from './graphql/Queries/userQueries';
-import { useLogout } from './utils/customHooks';
+import { ProtectedProfileRoute, ProtectedRoute, Footer } from './components';
+import MobileMenu from './components/MoblieMenu';
+
+import {
+  MainLayout,
+  UserProfile,
+  UserShipping,
+  PurchaseHistory,
+} from './pages/UserDashboard';
+
+import { AdminLayout, EditItem, NewItem } from './pages/AdminDashboard';
 import { loginUser } from './features/userSlice';
+import { GET_USER_DETAILS } from './graphql/Queries/userQueries';
+import ProtectedAdminRoute from './components/ProtectedAdminRoute';
+import { useLogout } from './utils/customHooks';
 
-function App() {
+const App = () => {
   const { userInfo } = useSelector((state) => state.user);
   const { data, loading } = useQuery(GET_USER_DETAILS, {
     skip: !userInfo,
@@ -34,9 +54,10 @@ function App() {
       dispatch(loginUser(data?.getUserById, loading));
     }
   }, [dispatch, data, loading, userInfo?.id]);
+
   return (
     <>
-      <MoblieMenu />
+      <MobileMenu />
       <Routes>
         <Route exact path='/' element={<HomePage />} />
         <Route path='/shop' element={<ShopPage />} />
@@ -60,15 +81,41 @@ function App() {
           }
         />
         <Route
+          path='/'
+          element={
+            <ProtectedProfileRoute>
+              <MainLayout />
+            </ProtectedProfileRoute>
+          }
+        >
+          <Route path='/profile' element={<UserProfile />} />
+          <Route path='/shipping' element={<UserShipping />} />
+          <Route path='/history' element={<PurchaseHistory />} />
+        </Route>
+        <Route
+          path='/'
+          element={
+            <ProtectedAdminRoute>
+              <AdminLayout />
+            </ProtectedAdminRoute>
+          }
+        >
+          <Route path='/new-item' element={<NewItem />} />
+          <Route path='/edit-item' element={<EditItem />} />
+        </Route>
+        <Route
           path='/order/'
           element={
+            <ProtectedProfileRoute>
               <OrderPage />
+            </ProtectedProfileRoute>
           }
         />
       </Routes>
+
       <Footer />
     </>
   );
-}
+};
 
 export default App;
