@@ -46,7 +46,7 @@ export const useLogout = () => {
 
   const handleLogout = () => {
     dispatch(logoutUser());
-    client.resetStore();
+    client.clearStore();
     navigate('/');
   };
 

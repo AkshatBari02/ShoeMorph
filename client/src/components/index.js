@@ -25,6 +25,7 @@ import LeftSidebar from './LeftSidebar';
 import ProtectedRoute from './ProtectedRoute';
 import ProtectedProfileRoute from './ProtectedProfileRoute';
 import MobileProfileBar from './MobileProfileBar';
+import CartItems from './CartItems';
 export {
   Logo,
   OrderSum,
@@ -53,4 +54,5 @@ export {
   ColorChart,
   FormRow,
   SearchBar,
+  CartItems,
 };

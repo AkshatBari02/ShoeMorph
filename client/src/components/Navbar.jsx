@@ -44,7 +44,7 @@ const Navbar = () => {
       </SearchBarContainer>
 
       <UserContainer>
-        {true ? (
+        {userInfo ? (
           <UserMenu />
         ) : (
           <Icon>
@@ -58,7 +58,7 @@ const Navbar = () => {
             </Link>
           </Icon>
         )}
-        {true && (
+        {userInfo && (
           <UserLinks>
             <Link to='/cart' style={{ color: 'var(--clr-mocha-2)' }}>
               <Badge
