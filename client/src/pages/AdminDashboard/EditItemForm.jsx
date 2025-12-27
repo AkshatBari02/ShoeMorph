@@ -74,17 +74,23 @@ const EditItemForm = ({ product }) => {
         <LoadingContainer>
           <Container>
             <Title>EDIT AN ITEM</Title>
-            <Label>Choose an image:</Label>
-            {loading ? (
-              <Loading />
-            ) : (
-              <Image
-                className='image'
-                cloudName='dsrhwv8to'
-                publicId={publicId}
-              />
-            )}
-            <Input type='file' onChange={(e) => uploadImage(e.target.files)} />
+            <ImageSection>
+              <Label>Current Image:</Label>
+              {product?.image && (
+                <CurrentImage src={product.image} alt={product.title} />
+              )}
+              <Label style={{ marginTop: '1rem' }}>Update Image:</Label>
+              {loading ? (
+                <Loading />
+              ) : imageUrl ? (
+                <Image
+                  className='image'
+                  cloudName='dsrhwv8to'
+                  publicId={publicId}
+                />
+              ) : null}
+              <Input type='file' onChange={(e) => uploadImage(e.target.files)} />
+            </ImageSection>
           </Container>
 
           <Form onSubmit={onSubmit}>
@@ -225,4 +231,19 @@ const Button = styled.button`
 
 const Label = styled.h3`
   color: var(--clr-primary-2);
+  margin-bottom: 0.5rem;
+`;
+
+const ImageSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const CurrentImage = styled.img`
+  width: 250px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  object-fit: cover;
 `;

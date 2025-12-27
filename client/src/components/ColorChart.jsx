@@ -80,7 +80,7 @@ const Color = styled.button`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1px solid var(--clr-border);
+  border: 2px solid var(--clr-border);
   margin-right: 10px;
   margin-top: 1rem;
   cursor: pointer;

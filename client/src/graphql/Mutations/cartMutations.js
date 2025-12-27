@@ -1,23 +1,29 @@
 import { gql } from '@apollo/client';
 
 const ADD_TO_CART = gql`
-  mutation (
+  mutation AddToCart(
     $userId: ID!
     $productId: ID!
-    $size: [Float]!
+    $size: JSON!
+    $color: String!
     $productPrice: Int!
+    $isCustomSize: Boolean
   ) {
     addToCart(
       userId: $userId
       productId: $productId
       size: $size
+      color: $color
       productPrice: $productPrice
+      isCustomSize: $isCustomSize
     ) {
       userId
       cartProducts {
         productId
         productPrice
         size
+        color
+        isCustomSize
         id
       }
     }
@@ -25,7 +31,7 @@ const ADD_TO_CART = gql`
 `;
 
 const DELETE_FROM_CART = gql`
-  mutation ($id: ID!) {
+  mutation DeleteFromCart($id: ID!) {
     deleteProductFromCart(id: $id) {
       userId
       cartProducts {
@@ -33,6 +39,8 @@ const DELETE_FROM_CART = gql`
         productId
         productPrice
         size
+        color
+        isCustomSize
       }
     }
   }

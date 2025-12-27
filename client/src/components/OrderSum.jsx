@@ -7,9 +7,25 @@ const OrderSum = ({ cartProducts, loading, link, onClick, orderPage }) => {
   const deliveryTax = 10.0;
   const salesTax = 5.0;
 
+  // Calculate quantity for each cart item
+  const calculateQuantity = (item) => {
+    if (item.isCustomSize) return 1;
+    return Array.isArray(item.size) ? item.size.length : 1;
+  };
+
+  // Calculate total number of items
+  const totalItems = cartProducts?.reduce(
+    (acc, val) => acc + calculateQuantity(val),
+    0
+  ) || 0;
+
+  // Calculate original price with proper quantity multiplication
   const originalPriceCalculated = cartProducts?.reduce(
-    (acc, val) => Number(acc) + Number(val.productPrice),
-    [0]
+    (acc, val) => {
+      const quantity = calculateQuantity(val);
+      return Number(acc) + (Number(val.productPrice) * quantity);
+    },
+    0
   );
 
   const totalPriceCalculated =
@@ -30,7 +46,7 @@ const OrderSum = ({ cartProducts, loading, link, onClick, orderPage }) => {
             <span>${parseFloat(originalPriceCalculated)?.toFixed(2)}</span>
           </Info>
           <Info>
-            3 Items
+            {totalItems} {totalItems === 1 ? 'Item' : 'Items'}
             <span>${parseFloat(originalPriceCalculated)?.toFixed(2)}</span>
           </Info>
           <Info>

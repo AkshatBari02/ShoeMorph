@@ -9,7 +9,7 @@ import Loading from '../assets/mui/Loading';
 import MuiError from '../assets/mui/Alert';
 import { mobile } from '../responsive';
 
-const HistoryItems = ({ productId, datePurchased, size }) => {
+const HistoryItems = ({ productId, datePurchased, size, color, isCustomSize }) => {
   const [historyItems, setHistoryItems] = useState([]);
   const [userRates, setUserRates] = useState(0);
   const [success, setSuccess] = useState(false);
@@ -41,6 +41,23 @@ const HistoryItems = ({ productId, datePurchased, size }) => {
 
   const { title, image, brand, rates, price } = historyItems;
 
+  const displaySize = () => {
+    if (isCustomSize) {
+      return (
+        <CustomSizeContainer>
+          <CustomSizeBadge>✓ Custom Measured</CustomSizeBadge>
+          <CustomSizeText>
+            L: {size.left}cm | R: {size.right}cm
+          </CustomSizeText>
+        </CustomSizeContainer>
+      );
+    }
+    
+    // Regular size
+    const sizeArray = Array.isArray(size) ? size : [size];
+    return `Size: ${sizeArray.join(', ')} US`;
+  };
+
   return (
     <Wrapper>
       <Container>
@@ -51,7 +68,10 @@ const HistoryItems = ({ productId, datePurchased, size }) => {
           <InfoContainer>
             <Title>{title}</Title>
             <Brand>{brand}</Brand>
-            <Size>{`Size: ${size}`}</Size>
+            <ColorDisplay>
+              Color: <ColorCircle color={color} /> {color}
+            </ColorDisplay>
+            <Size>{displaySize()}</Size>
             <Price>Price: ${price}</Price>
           </InfoContainer>
         </ItemsContainer>
@@ -141,6 +161,45 @@ const Size = styled.p`
   font-size: 14px;
   font-weight: 500;
   margin-top: 0.5rem;
+`;
+
+const CustomSizeContainer = styled.div`
+  margin-top: 0.5rem;
+`;
+
+const CustomSizeBadge = styled.div`
+  display: inline-block;
+  background-color: #4caf50;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+`;
+
+const CustomSizeText = styled.p`
+  font-size: 12px;
+  color: #333;
+  margin: 0.25rem 0;
+`;
+
+const ColorDisplay = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+`;
+
+const ColorCircle = styled.span`
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: ${props => props.color};
+  border: 2px solid #ddd;
 `;
 
 const Price = styled.h4`

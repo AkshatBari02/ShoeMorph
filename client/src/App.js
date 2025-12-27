@@ -25,7 +25,7 @@ import {
   PurchaseHistory,
 } from './pages/UserDashboard';
 
-import { AdminLayout, EditItem, NewItem } from './pages/AdminDashboard';
+import { AdminLayout, EditItem, NewItem, AllOrders } from './pages/AdminDashboard';
 import { loginUser } from './features/userSlice';
 import { GET_USER_DETAILS } from './graphql/Queries/userQueries';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
@@ -102,6 +102,7 @@ const App = () => {
         >
           <Route path='/new-item' element={<NewItem />} />
           <Route path='/edit-item' element={<EditItem />} />
+          <Route path='/all-orders' element={<AllOrders />} />
         </Route>
         <Route
           path='/order/'

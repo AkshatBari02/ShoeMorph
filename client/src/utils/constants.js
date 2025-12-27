@@ -10,6 +10,7 @@ import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import HomeIcon from '@mui/icons-material/Home';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 export const top_picks = [
   {
@@ -87,6 +88,12 @@ export const adminSidebarLinks = [
   },
   {
     id: 3,
+    name: 'All Orders',
+    path: '/all-orders',
+    icon: <ShoppingCartIcon />,
+  },
+  {
+    id: 4,
     name: 'Back Home',
     path: '/',
     icon: <HomeIcon />,

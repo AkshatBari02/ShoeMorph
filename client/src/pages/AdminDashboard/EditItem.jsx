@@ -1,58 +1,67 @@
-import { useLazyQuery } from '@apollo/client';
-import React from 'react';
+import { useLazyQuery, useQuery } from '@apollo/client';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import MuiError from '../../assets/mui/Alert';
-import { FormRow } from '../../components';
-import { GET_PRODUCT_BY_ID } from '../../graphql/Queries/productQueries';
+import {AutoComplete} from '../../assets/mui/AutoComplete';
+import { GET_PRODUCT_BY_ID, GET_PRODUCTS } from '../../graphql/Queries/productQueries';
 import Loading from '../../assets/mui/Loading';
 import { EditItemForm } from '../AdminDashboard';
-import { useForm } from '../../utils/customHooks';
 
 const EditItem = () => {
-  const initialState = {
-    product: '',
-    errors: '',
-    productId: '',
-  };
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [product, setProduct] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const { onChange, onSubmit, values } = useForm(
-    getProductFunction,
-    initialState
-  );
+  const { loading: productsLoading, data: productsData, error: productsError } = useQuery(GET_PRODUCTS);
 
   const [getProduct, { loading, error }] = useLazyQuery(GET_PRODUCT_BY_ID, {
     onCompleted({ getProductById }) {
-      values.product = getProductById;
-      values.errors = '';
+      setProduct(getProductById);
+      setErrorMsg('');
     },
   });
 
-  function getProductFunction() {
-    getProduct({ variables: { productId: values.productId } });
-  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (selectedProduct) {
+      getProduct({ variables: { productId: selectedProduct.id } });
+    }
+  };
+
+  const handleProductSelect = (product) => {
+    setSelectedProduct(product);
+    setErrorMsg('');
+  };
+
+  const allProducts = productsData?.getProducts || [];
 
   return (
     <>
-      {values.product ? (
-        <EditItemForm product={values.product} />
+      {product ? (
+        <EditItemForm product={product} />
       ) : (
         <Wrapper>
-          {loading ? (
+          {loading || productsLoading ? (
             <Loading />
           ) : (
-            <Form onSubmit={onSubmit}>
-              <Title>Please type the ID of the item</Title>
-              <FormRow
-                name='productId'
-                type='text'
-                value={values.productId}
-                onChange={onChange}
+            <Form onSubmit={handleSubmit}>
+              <Title>Search and select a product to edit</Title>
+              <AutoComplete
+                options={allProducts}
+                value={selectedProduct}
+                getOptionLabel={(option) => option ? `${option.title} - ${option.brand} (${option.model})` : ''}
+                onChange={(event, value) => handleProductSelect(value)}
+                label="Select Product"
+                placeholder="Search by product name, brand, or model..."
+                sx={{ width: '100%', marginBottom: '1rem' }}
               />
-              <Button type='submit'>Search</Button>
-              {values.errors ? (
-                <MuiError type='error'>{values.errors}</MuiError>
+              <Button type='submit' disabled={!selectedProduct}>Edit Product</Button>
+              {errorMsg ? (
+                <MuiError type='error'>{errorMsg}</MuiError>
               ) : error ? (
                 <MuiError type='error'>{error.message}</MuiError>
+              ) : productsError ? (
+                <MuiError type='error'>{productsError.message}</MuiError>
               ) : (
                 ''
               )}
@@ -87,5 +96,10 @@ const Button = styled.button`
   width: 50%;
   &:hover {
     background-color: var(--clr-primary-2);
+  }
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 `;

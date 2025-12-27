@@ -2,6 +2,7 @@ import { gql } from 'apollo-server-express';
 
 export const typeDefs = gql`
   scalar Date
+  scalar JSON
   type User {
     id: ID!
     username: String!
@@ -31,6 +32,7 @@ export const typeDefs = gql`
     getDefaultTopPicks: [Product]!
     getUserCart: Cart!
     getUserOrders: [Order]!
+    getAllOrders: [Order]!
   }
 
   input ProductsFiltersInput {
@@ -99,8 +101,10 @@ export const typeDefs = gql`
 
   type CartProducts {
     productId: String!
-    size: [Float!]!
+    size: JSON!
+    color: String!
     productPrice: Int!
+    isCustomSize: Boolean!
     id: ID
   }
 
@@ -159,8 +163,10 @@ export const typeDefs = gql`
     addToCart(
       userId: ID!
       productId: ID!
-      size: [Float]!
+      size: JSON!
+      color: String!
       productPrice: Int!
+      isCustomSize: Boolean
     ): Cart!
     deleteProductFromCart(id: ID!): Cart!
     createProductReview(productId: ID!, userRate: Int!): Product!

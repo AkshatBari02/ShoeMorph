@@ -10,9 +10,28 @@ const GET_USER_ORDER = gql`
         productId
         productPrice
         size
+        color
+        isCustomSize
       }
     }
   }
 `;
 
-export { GET_USER_ORDER };
+const GET_ALL_ORDERS = gql`
+  query {
+    getAllOrders {
+      id
+      purchasedBy
+      datePurchased
+      orderProducts {
+        productId
+        productPrice
+        size
+        color
+        isCustomSize
+      }
+    }
+  }
+`;
+
+export { GET_USER_ORDER, GET_ALL_ORDERS };

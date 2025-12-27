@@ -6,10 +6,30 @@ const orderSchema = mongoose.Schema({
     ref: 'users',
     required: true,
   },
-  orderProducts: {
-    type: Array,
-    required: true,
-  },
+  orderProducts: [
+    {
+      productId: {
+        type: String,
+        required: true,
+      },
+      size: {
+        type: mongoose.Schema.Types.Mixed, // Can be [Number] or Object {left, right}
+        required: true,
+      },
+      color: {
+        type: String,
+        required: true,
+      },
+      productPrice: {
+        type: Number,
+        required: true,
+      },
+      isCustomSize: {
+        type: Boolean,
+        default: false,
+      },
+    },
+  ],
   datePurchased: {
     type: Date,
   },

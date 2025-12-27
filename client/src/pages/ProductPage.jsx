@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navbar, Stars } from '../components';
+import { Navbar, Stars, CustomSizeModal } from '../components';
 import { useMutation, useQuery } from '@apollo/client';
 import { GET_SINGLE_PRODUCT } from '../graphql/Queries/productQueries';
 import Loading from '../assets/mui/Loading';
@@ -15,7 +15,11 @@ import { mobile } from '../responsive';
 const ProductPage = () => {
   const [product, setProduct] = useState('');
   const [shoeSize, setShoeSize] = useState([]);
+  const [selectedColor, setSelectedColor] = useState('');
+  const [customSize, setCustomSize] = useState(null);
+  const [isCustomSize, setIsCustomSize] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [customSizeModalOpen, setCustomSizeModalOpen] = useState(false);
 
   const userInfo = useSelector((state) => state.user.userInfo);
 
@@ -39,13 +43,10 @@ const ProductPage = () => {
     {
       onCompleted() {
         setShoeSize([]);
+        setSelectedColor('');
+        setCustomSize(null);
+        setIsCustomSize(false);
         setSuccess(true);
-      },
-      variables: {
-        userId,
-        productId: id,
-        size: shoeSize,
-        productPrice: data?.getProductById.price,
       },
       refetchQueries: [
         {
@@ -66,71 +67,152 @@ const ProductPage = () => {
   const { image, title, price, rates, inStock, brand, model, size } = product;
 
   const filteredCartProducts = cart?.getUserCart.cartProducts.filter(
-    (c) => c.productId === id
+    (c) => c.productId === id && c.color === selectedColor
   );
-  const filteredSizesFromCart = filteredCartProducts?.map((c) => +c.size);
+  const filteredSizesFromCart = filteredCartProducts
+    ?.filter(c => !c.isCustomSize)
+    ?.flatMap((c) => c.size);
+  const hasCustomSizeInCart = filteredCartProducts?.some(c => c.isCustomSize);
   const matchUserId = userId === cart?.getUserCart.userId;
+
+  const handleCustomSizeClick = () => {
+    if (!userId) {
+      navigate(`/login?redirect=${id}`);
+    } else {
+      setCustomSizeModalOpen(true);
+    }
+  };
+
+  const handleSizeCalculated = (sizeData) => {
+    setCustomSize(sizeData);
+    setIsCustomSize(true);
+    setShoeSize([]); // Clear regular size selection
+  };
+
+  const handleRegularSizeSelect = (selectedSize) => {
+    if (shoeSize.includes(selectedSize)) {
+      setShoeSize(shoeSize.filter(s => s !== selectedSize));
+    } else {
+      setShoeSize([...shoeSize, selectedSize]);
+    }
+    setIsCustomSize(false);
+    setCustomSize(null);
+  };
 
   const onClickHandler = () => {
     if (!userId) {
       navigate(`/login?redirect=${id}`);
-    } else {
-      cartHandle();
+      return;
     }
+
+    if (!selectedColor) {
+      // No color selected
+      return;
+    }
+
+    if (!isCustomSize && shoeSize.length === 0) {
+      // No size selected
+      return;
+    }
+
+    if (isCustomSize && !customSize) {
+      // Custom size not calculated
+      return;
+    }
+
+    const sizeValue = isCustomSize ? customSize : shoeSize;
+
+    cartHandle({
+      variables: {
+        userId,
+        productId: id,
+        size: sizeValue,
+        color: selectedColor,
+        productPrice: data?.getProductById.price,
+        isCustomSize: isCustomSize,
+      },
+    });
   };
 
-  return (
-    <Wrapper className='section-center'>
-      <Navbar />
-      <Link to='/shop'>
-        <Button>BACK TO PRODUCTS</Button>
-      </Link>
-      {loading ? (
-        <Loading />
-      ) : error ? (
-        <MuiError type='error' value={error.message} />
-      ) : (
-        <ProductContainer>
-          <ImageContainer>
-            <Image src={image} />
-          </ImageContainer>
-          <InfoContainer>
-            <Title>{title}</Title>
-            <Stars stars={rates} />
-            <Price>${price}</Price>
-            <Lorem>
-              Lorem ipsum dolor sit, amet consectetur adipisicing elit. Numquam
-              ullam est dicta vero sint aliquid ut accusamus, natus corporis
-              quisquam obcaecati? Similique odio ex repellendus eaque, molestiae
-              praesentium sunt nesciunt.
-            </Lorem>
-            <Info>
-              Available:<span>{inStock ? 'In stock' : 'Out of stock'}</span>
-            </Info>
-            <Info>
-              Brand:<span>{brand}</span>
-            </Info>
-            <Info>
-              Model:<span>{model}</span>
-            </Info>
+  const clearCustomSize = () => {
+    setCustomSize(null);
+    setIsCustomSize(false);
+  };
+  
+    return (
+      <Wrapper>
+        <Navbar />
+        {loading ? (
+          <Loading />
+        ) : error ? (
+          <MuiError type='error' value={error.message} />
+        ) : (
+          <ProductContainer>
+            <ImageContainer>
+              <Image src={image} />
+            </ImageContainer>
+            <InfoContainer>
+              <Title>{title}</Title>
+              <Stars stars={rates} />
+              <Price>${price}</Price>
+              <Lorem>
+                Experience premium quality and authentic style with this carefully selected
+                footwear. Each pair is crafted with attention to detail, ensuring comfort
+                and durability. Choose your perfect size or get custom measurements for
+                an ideal fit. Available in multiple colors to match your style.
+              </Lorem>
+              <Info>
+                Available:<span>{inStock ? 'In stock' : 'Out of stock'}</span>
+              </Info>
+              <Info>
+                Brand:<span>{brand}</span>
+              </Info>
+              <Info>
+                Model:<span>{model}</span>
+              </Info>
 
-            {inStock ? (
+              {inStock && product.color && product.color.length > 0 && (
+                <Info>
+                  Colors:
+                  <ColorSelectionContainer>
+                    {product.color.map((colorOption, index) => (
+                      <ColorButton
+                        key={index}
+                        color={colorOption}
+                        className={selectedColor === colorOption ? 'active' : ''}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedColor(colorOption);
+                        }}
+                        title={colorOption}
+                      />
+                    ))}
+                  </ColorSelectionContainer>
+                </Info>
+              )}
+  
+              {inStock ? (
               <Info>
                 Sizes:
                 <SizeContainer>
-                  {size?.map((size, index) => (
+                  {size?.map((sizeOption, index) => (
                     <SizeButton
-                      className={size === shoeSize ? 'active' : ''}
-                      onClick={(e) => setShoeSize(Number(e.target.value))}
-                      value={size}
+                      className={
+                        !isCustomSize && shoeSize.includes(sizeOption) ? 'active' : ''
+                      }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleRegularSizeSelect(sizeOption);
+                      }}
                       key={index}
                       disabled={
-                        matchUserId &&
-                        filteredCartProducts &&
-                        filteredSizesFromCart?.includes(size)
+                        isCustomSize ||
+                        (matchUserId &&
+                          filteredCartProducts &&
+                          filteredSizesFromCart?.includes(sizeOption))
                       }
                     >
-                      {`${size} US`}
+                      {`${sizeOption} US`}
                     </SizeButton>
                   ))}
                 </SizeContainer>
@@ -138,36 +220,75 @@ const ProductPage = () => {
             ) : (
               ''
             )}
-            <hr />
-            <Button
-              className={`${inStock ? '' : 'btn-disabled'}`}
-              style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}
-              disabled={cartLoading || !inStock}
-              onClick={onClickHandler}
-            >
-              {inStock ? 'ADD TO CART' : 'Out of stock'}
-            </Button>
 
-            {cartLoading ? (
-              <Loading />
-            ) : cartError ? (
-              <MuiError type='error' width={'100%'} value={cartError.message} />
-            ) : success ? (
-              <MuiError type='success'>
-                Item added to the cart!
-                <Link
-                  style={{ textDecoration: 'underline', margin: '0.5rem' }}
-                  to='/cart'
+            {/* Custom Size Section */}
+            {inStock && (
+              <CustomSizeSection>
+                <CustomSizeButton
+                  onClick={handleCustomSizeClick}
+                  disabled={hasCustomSizeInCart}
                 >
-                  Visit cart
-                </Link>
-              </MuiError>
-            ) : (
-              ''
-            )}
+                  {hasCustomSizeInCart
+                    ? 'Custom Size Already in Cart'
+                    : '📏 Get Custom Size Measurement'}
+                </CustomSizeButton>
+
+                {isCustomSize && customSize && (
+                  <CustomSizeDisplay>
+                    <CustomSizeTitle>✓ Custom Measured Size Selected</CustomSizeTitle>
+                    <CustomSizeInfo>
+                      Left: {customSize.left} cm | Right: {customSize.right} cm
+                    </CustomSizeInfo>
+                    <ClearCustomButton onClick={clearCustomSize}>
+                      Use Regular Size Instead
+                    </ClearCustomButton>
+                  </CustomSizeDisplay>
+                )}
+                </CustomSizeSection>
+              )}
+  
+              <hr />
+              <Button
+                    className={`${inStock ? '' : 'btn-disabled'}`}
+                    style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}
+                    disabled={
+                      cartLoading ||
+                      !inStock ||
+                      !selectedColor ||
+                      (!isCustomSize && shoeSize.length === 0) ||
+                      (isCustomSize && !customSize)
+                    }
+                    onClick={onClickHandler}
+                  >
+                    {inStock ? 'ADD TO CART' : 'Out of stock'}
+                  </Button>
+      
+                  {cartLoading ? (
+                    <Loading />
+                  ) : cartError ? (
+                    <MuiError type='error' width={'100%'} value={cartError.message} />
+                  ) : success ? (
+                    <MuiError type='success'>
+                      Item added to the cart!
+                      <Link
+                        style={{ textDecoration: 'underline', margin: '0.5rem' }}
+                        to='/cart'
+                      >
+                        Visit cart
+                      </Link>
+                    </MuiError>
+                  ) : (
+                ''
+              )}
           </InfoContainer>
         </ProductContainer>
       )}
+
+      <CustomSizeModal
+        isOpen={customSizeModalOpen}
+        onClose={() => setCustomSizeModalOpen(false)}
+        onSizeCalculated={handleSizeCalculated}
+      />
     </Wrapper>
   );
 };
@@ -277,5 +398,96 @@ const SizeButton = styled.button`
 
   :checked {
     border: 1px solid black;
+  }
+`;
+
+const ColorSelectionContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+`;
+
+const ColorButton = styled.button`
+  background-color: ${props => props.color};
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+
+  &:hover {
+    border-color: #333;
+    transform: scale(1.1);
+  }
+
+  &.active {
+    border: 3px solid black;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px black;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const CustomSizeSection = styled.div`
+  margin: 1.5rem 0;
+`;
+
+const CustomSizeButton = styled.button`
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.75rem 1.5rem;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s;
+  
+  &:hover:not(:disabled) {
+    background-color: #1976d2;
+  }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
+const CustomSizeDisplay = styled.div`
+  background-color: #e8f5e9;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+`;
+
+const CustomSizeTitle = styled.p`
+  font-weight: bold;
+  color: #2e7d32;
+  margin: 0 0 0.5rem 0;
+`;
+
+const CustomSizeInfo = styled.p`
+  margin: 0 0 0.5rem 0;
+  font-size: 14px;
+`;
+
+const ClearCustomButton = styled.button`
+  background: none;
+  border: none;
+  color: #1976d2;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  
+  &:hover {
+    color: #1565c0;
   }
 `;

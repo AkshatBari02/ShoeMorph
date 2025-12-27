@@ -12,20 +12,19 @@ const About = () => {
           About ShoeMorph
         </Title>
         <Info>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit
-          <br />. Sunt quo fugiat sit consequuntur
-          <br /> hic repudiandae quis? Error facere, labore, aperiam tenetur
+          ShoeMorph is your ultimate destination for premium sneakers and footwear.
+          <br />We offer an extensive collection of authentic shoes from top brands
+          <br /> including Nike, Adidas, Yeezy, Jordan, and more. With our innovative
           <br />
-          necessitatibus voluptates veritatis quaerat ad vitae adipisci
-          cupiditate nostrum <br />
-          porro doloremque a totam facilis et! Reprehenderit quidem fugit
-          delectus.
-          <br /> hic repudiandae quis? Error facere, labore, aperiam tenetur
-          necessitatibus
-          <br /> voluptates veritatis quaerat ad vitae adipisci cupiditate
-          nostrum <br />
-          porro doloremque a totam facilis et! Reprehenderit quidem fugit
-          delectus.
+          custom foot measurement technology, you can get the perfect fit every time.
+          <br />
+          Simply upload images of your feet, and our advanced system calculates
+          <br /> your precise measurements for a truly personalized shopping experience.
+          <br />
+          Browse through our curated selection, choose from multiple colors and sizes,
+          <br /> and enjoy seamless shopping with secure checkout. Whether you're looking
+          <br /> for the latest releases or timeless classics, ShoeMorph brings style
+          <br /> and comfort right to your doorstep.
         </Info>
       </AboutContainer>
       <ImageContainer>

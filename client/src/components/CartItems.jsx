@@ -11,7 +11,7 @@ import { GET_USER_CART } from '../graphql/Queries/cartQueries';
 import MuiError from '../assets/mui/Alert';
 import { mobile } from '../responsive';
 
-const CartItems = ({ productId, size, id, orderPage, historyPage }) => {
+const CartItems = ({ productId, size, color, id, orderPage, historyPage, isCustomSize }) => {
   const [cartItems, setCartItems] = useState([]);
   const { userInfo } = useSelector((state) => state.user);
 
@@ -36,6 +36,28 @@ const CartItems = ({ productId, size, id, orderPage, historyPage }) => {
 
   const { image, title, model, price } = cartItems;
 
+  const displaySize = () => {
+    if (isCustomSize) {
+      return (
+        <CustomSizeContainer>
+          <CustomSizeBadge>Custom Measured Size</CustomSizeBadge>
+          <CustomSizeText>
+            L: {size.left} cm | R: {size.right} cm
+          </CustomSizeText>
+        </CustomSizeContainer>
+      );
+    }
+    
+    // Regular size (array)
+    const sizeArray = Array.isArray(size) ? size : [size];
+    return `Sizes: ${sizeArray.join(', ')} US`;
+  };
+
+  const calculateQuantity = () => {
+    if (isCustomSize) return 1;
+    return Array.isArray(size) ? size.length : 1;
+  };
+
   return (
     <>
       <Container>
@@ -57,9 +79,12 @@ const CartItems = ({ productId, size, id, orderPage, historyPage }) => {
               <InfoContainer>
                 <Title>{title} </Title>
                 <Model>{model}</Model>
-                <Size>{`Sizes: ${size} US`}</Size>
+                <ColorDisplay>
+                  Color: <ColorCircle color={color} /> {color}
+                </ColorDisplay>
+                <Size>{displaySize()}</Size>
 
-                <Qty>{`Qty: ${size?.length}`}</Qty>
+                <Qty>{`Qty: ${calculateQuantity()}`}</Qty>
               </InfoContainer>
             </ItemContainer>
           )}
@@ -101,7 +126,7 @@ const CartItems = ({ productId, size, id, orderPage, historyPage }) => {
                       onClick={() => deleteProduct()}
                     />
                   )}
-                  <Price>${price * size?.length}</Price>
+                  <Price>${price * calculateQuantity()}</Price>
                 </div>
               )}
             </PriceContainer>
@@ -151,9 +176,49 @@ const Size = styled.p`
   margin-top: 0.5rem;
 `;
 
+const CustomSizeContainer = styled.div`
+  margin-top: 0.5rem;
+`;
+
+const CustomSizeBadge = styled.div`
+  display: inline-block;
+  background-color: #4caf50;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+`;
+
+const CustomSizeText = styled.p`
+  font-size: 13px;
+  color: #333;
+  margin: 0.25rem 0;
+`;
+
 const Qty = styled.p`
   font-size: 14px;
   font-weight: 500;
+`;
+
+const ColorDisplay = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+`;
+
+const ColorCircle = styled.span`
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: ${props => props.color};
+  border: 2px solid #ddd;
 `;
 
 const Price = styled.h2`

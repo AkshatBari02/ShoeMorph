@@ -26,6 +26,7 @@ import ProtectedRoute from './ProtectedRoute';
 import ProtectedProfileRoute from './ProtectedProfileRoute';
 import MobileProfileBar from './MobileProfileBar';
 import CartItems from './CartItems';
+import CustomSizeModal from './CustomSizeModal';
 export {
   Logo,
   OrderSum,
@@ -55,4 +56,5 @@ export {
   FormRow,
   SearchBar,
   CartItems,
+  CustomSizeModal,
 };
