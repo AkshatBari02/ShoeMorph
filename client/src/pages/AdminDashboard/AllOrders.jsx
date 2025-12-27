@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@apollo/client';
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@apollo/client';
 import styled from 'styled-components';
 import Loading from '../../assets/mui/Loading';
 import MuiError from '../../assets/mui/Alert';
 import { GET_ALL_ORDERS } from '../../graphql/Queries/orderQueries';
 import { GET_SINGLE_PRODUCT } from '../../graphql/Queries/productQueries';
+import { UPDATE_ORDER_PAYMENT_STATUS } from '../../graphql/Mutations/orderMutation';
 import { mobile } from '../../responsive';
 import moment from 'moment';
 
 const AllOrders = () => {
-  const [expandedOrders, setExpandedOrders] = useState({});
-  
-  const { loading, data, error } = useQuery(GET_ALL_ORDERS, {
+  const { loading, data, error, refetch } = useQuery(GET_ALL_ORDERS, {
     pollInterval: 5000,
   });
 
@@ -20,18 +19,11 @@ const AllOrders = () => {
 
   const orders = data?.getAllOrders || [];
 
-  // Flatten orders to show one row per product
-  const flattenedOrders = [];
-  orders.forEach(order => {
-    order.orderProducts.forEach(product => {
-      flattenedOrders.push({
-        orderId: order.id,
-        userId: order.purchasedBy,
-        datePurchased: order.datePurchased,
-        ...product
-      });
-    });
-  });
+  // Group orders by order ID to show payment info per order
+  const ordersWithDetails = orders.map(order => ({
+    ...order,
+    totalItems: order.orderProducts.length,
+  }));
 
   const displaySize = (size, isCustomSize) => {
     if (isCustomSize) {
@@ -47,7 +39,7 @@ const AllOrders = () => {
         <Title>All Orders</Title>
         <SubTitleRow>
           <SubTitle>Total Orders: {orders.length}</SubTitle>
-          <SubTitle>Total Products Ordered: {flattenedOrders.length}</SubTitle>
+          <SubTitle>Revenue: ${orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0).toFixed(2)}</SubTitle>
         </SubTitleRow>
       </HeaderSection>
 
@@ -58,24 +50,26 @@ const AllOrders = () => {
               <Th>Order ID</Th>
               <Th>User ID</Th>
               <Th>Date</Th>
-              <Th>Product</Th>
-              <Th>Color</Th>
-              <Th>Size</Th>
-              <Th>Price</Th>
+              <Th>Items</Th>
+              <Th>Total</Th>
+              <Th>Payment</Th>
+              <Th>Status</Th>
+              <Th>Action</Th>
             </tr>
           </thead>
           <tbody>
-            {flattenedOrders.map((item, index) => (
+            {ordersWithDetails.map((order) => (
               <OrderRow
-                key={`${item.orderId}-${item.productId}-${index}`}
-                item={item}
+                key={order.id}
+                order={order}
                 displaySize={displaySize}
+                refetch={refetch}
               />
             ))}
           </tbody>
         </Table>
 
-        {flattenedOrders.length === 0 && (
+        {ordersWithDetails.length === 0 && (
           <NoOrders>No orders found</NoOrders>
         )}
       </TableContainer>
@@ -85,65 +79,135 @@ const AllOrders = () => {
 
 export default AllOrders;
 
-const OrderRow = ({ item, displaySize }) => {
-  const [productDetails, setProductDetails] = useState(null);
-  
-  const { loading, data } = useQuery(GET_SINGLE_PRODUCT, {
-    variables: { productId: item.productId },
-    onCompleted: (data) => {
-      setProductDetails(data.getProductById);
-    }
+const ProductItemDetails = ({ productId, item }) => {
+  const { data, loading } = useQuery(GET_SINGLE_PRODUCT, {
+    variables: { productId: productId },
+    skip: !productId,
   });
 
+  const product = data?.getProductById;
+
+  if (loading) return <ProductItem>Loading product details...</ProductItem>;
+  if (!product) return <ProductItem>Product not found</ProductItem>;
+
   return (
-    <Tr>
-      <Td>
-        <IdText>{item.orderId}</IdText>
-      </Td>
-      <Td>
-        <IdText>{item.userId}</IdText>
-      </Td>
-      <Td>
-        <DateText>{moment(item.datePurchased).format('MMM DD, YYYY')}</DateText>
-      </Td>
-      <Td>
-        {loading ? (
-          'Loading...'
-        ) : productDetails ? (
-          <ProductInfo>
-            <ProductImage src={productDetails.image} alt={productDetails.title} />
-            <ProductDetails>
-              <ProductTitle>{productDetails.title}</ProductTitle>
-              <ProductMeta>Brand: {productDetails.brand}</ProductMeta>
-              <ProductMeta>Model: {productDetails.model}</ProductMeta>
-              <ProductMeta>Colors: {productDetails.color?.join(', ')}</ProductMeta>
-            </ProductDetails>
-          </ProductInfo>
-        ) : (
-          'N/A'
-        )}
-      </Td>
-      <Td>
-        <ColorDisplay>
-          {item.color ? (
-            <>
-              <ColorCircle color={item.color} />
-              <span>{item.color}</span>
-            </>
-          ) : (
-            <span style={{ color: '#999', fontStyle: 'italic' }}>N/A</span>
+    <ProductItem>
+      <ProductImageContainer>
+        <ProductImage src={product.image} alt={product.title} />
+      </ProductImageContainer>
+      <ProductDetails>
+        <ProductTitle>{product.title}</ProductTitle>
+        <ProductMeta>Brand: {product.brand} | Model: {product.model}</ProductMeta>
+        <ProductInfoRow>
+          <ColorDisplay>
+            <ColorCircle color={item.color} />
+            {item.color}
+          </ColorDisplay>
+          <ProductDetail>Size: {Array.isArray(item.size) ? item.size.join(', ') : JSON.stringify(item.size)}</ProductDetail>
+          <ProductDetail>Price: ${item.productPrice}</ProductDetail>
+          {item.isCustomSize && <CustomBadge>Custom Size</CustomBadge>}
+        </ProductInfoRow>
+      </ProductDetails>
+    </ProductItem>
+  );
+};
+
+const OrderRow = ({ order, refetch }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  const [updatePaymentStatus, { error }] = useMutation(UPDATE_ORDER_PAYMENT_STATUS, {
+    onCompleted() {
+      setUpdating(false);
+      refetch();
+    },
+  });
+
+  const handleStatusChange = (newStatus) => {
+    setUpdating(true);
+    updatePaymentStatus({
+      variables: {
+        orderId: order.id,
+        paymentStatus: newStatus,
+      },
+    });
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Paid': return '#4caf50';
+      case 'Pending': return '#ff9800';
+      case 'Failed': return '#f44336';
+      default: return '#999';
+    }
+  };
+
+  return (
+    <>
+      <Tr>
+        <Td>
+          <IdText>{order.id}</IdText>
+        </Td>
+        <Td>
+          <IdText>{order.purchasedBy}</IdText>
+        </Td>
+        <Td>
+          <DateText>{moment(order.datePurchased).format('MMM DD, YYYY')}</DateText>
+        </Td>
+        <Td>
+          <ItemsCount onClick={() => setExpanded(!expanded)}>
+            {order.totalItems} items {expanded ? '▲' : '▼'}
+          </ItemsCount>
+        </Td>
+        <Td>
+          <Price>${order.totalAmount?.toFixed(2) || '0.00'}</Price>
+        </Td>
+        <Td>
+          <PaymentMethod method={order.paymentMethod}>
+            {order.paymentMethod || 'N/A'}
+          </PaymentMethod>
+        </Td>
+        <Td>
+          <PaymentStatus color={getStatusColor(order.paymentStatus)}>
+            {order.paymentStatus || 'N/A'}
+          </PaymentStatus>
+        </Td>
+        <Td>
+          {order.paymentMethod === 'COD' && order.paymentStatus === 'Pending' && (
+            <ActionButton
+              onClick={() => handleStatusChange('Paid')}
+              disabled={updating}
+            >
+              {updating ? 'Updating...' : 'Mark Paid'}
+            </ActionButton>
           )}
-        </ColorDisplay>
-      </Td>
-      <Td>
-        <SizeInfo isCustom={item.isCustomSize}>
-          {displaySize(item.size, item.isCustomSize)}
-        </SizeInfo>
-      </Td>
-      <Td>
-        <Price>${item.productPrice}</Price>
-      </Td>
-    </Tr>
+          {order.paymentStatus === 'Paid' && '✓ Completed'}
+        </Td>
+      </Tr>
+      {expanded && (
+        <Tr>
+          <Td colSpan="8">
+            <ExpandedDetails>
+              <DetailsTitle>Order Items:</DetailsTitle>
+              {order.orderProducts.map((item, idx) => (
+                <ProductItemDetails
+                  key={idx}
+                  productId={item.productId}
+                  item={item}
+                />
+              ))}
+            </ExpandedDetails>
+          </Td>
+        </Tr>
+      )}
+      {error && (
+        <Tr>
+          <Td colSpan="8">
+            <MuiError type="error" value={error.message} />
+          </Td>
+        </Tr>
+      )}
+    </>
   );
 };
 
@@ -241,39 +305,136 @@ const Td = styled.td`
   font-size: 0.9rem;
 `;
 
-const ProductImage = styled.img`
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 4px;
+const ItemsCount = styled.div`
+  color: var(--clr-primary);
+  cursor: pointer;
+  font-weight: 500;
+  user-select: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const PaymentMethod = styled.div`
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 500;
+  text-align: center;
+  background: ${props => props.method === 'PayPal' ? '#e3f2fd' : '#fff9c4'};
+  color: ${props => props.method === 'PayPal' ? '#1976d2' : '#f57c00'};
+  font-size: 0.85rem;
+  display: inline-block;
+`;
+
+const PaymentStatus = styled.div`
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  text-align: center;
+  background: ${props => `${props.color}20`};
+  color: ${props => props.color};
+  font-size: 0.85rem;
+  display: inline-block;
+`;
+
+const ActionButton = styled.button`
+  padding: 0.5rem 1rem;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:hover:not(:disabled) {
+    background: #45a049;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const ExpandedDetails = styled.div`
+  padding: 0.2rem 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+`;
+
+const DetailsTitle = styled.h4`
+  color: var(--clr-primary);
+  margin-bottom: 1rem;
+`;
+
+const ProductItem = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  border-left: 3px solid var(--clr-primary);
+  align-items: center;
+`;
+
+const ProductImageContainer = styled.div`
   flex-shrink: 0;
+`;
+
+const ProductInfoRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.5rem;
+`;
+
+const ProductDetail = styled.div`
+  font-size: 0.85rem;
+  color: #666;
+  padding: 0.25rem 0.5rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+`;
+
+const CustomBadge = styled.span`
+  background: #4caf50;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+`;
+
+const ProductImage = styled.img`
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
 `;
 
 const ProductDetails = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
   flex: 1;
 `;
 
 const ProductTitle = styled.div`
   font-weight: 600;
+  font-size: 1rem;
   color: var(--clr-primary);
-  white-space: normal;
-  word-break: break-word;
 `;
 
 const ProductMeta = styled.div`
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--clr-gray);
-  white-space: normal;
-`;
-
-const ProductInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-width: 350px;
+  font-weight: 500;
 `;
 
 const IdText = styled.div`
@@ -302,31 +463,17 @@ const ColorDisplay = styled.div`
 `;
 
 const ColorCircle = styled.div`
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background-color: ${props => props.color};
-  border: 2px solid #000;
-  flex-shrink: 0;
-`;
-
-const SizeInfo = styled.div`
-  padding: 0.5rem;
-  background-color: ${props => props.isCustom ? '#e8f5e9' : '#e3f2fd'};
-  border-radius: 4px;
-  font-weight: 500;
-  color: ${props => props.isCustom ? '#2e7d32' : '#1976d2'};
-  font-size: 0.85rem;
-  min-width: 150px;
-  white-space: normal;
+  border: 2px solid #333;
 `;
 
 const Price = styled.div`
   font-weight: 600;
-  color: var(--clr-red);
-  font-size: 1.1rem;
-  min-width: 80px;
-  white-space: nowrap;
+  font-size: 1rem;
+  color: #2e7d32;
 `;
 
 const NoOrders = styled.div`

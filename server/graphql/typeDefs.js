@@ -96,6 +96,10 @@ export const typeDefs = gql`
     purchasedBy: ID!
     orderProducts: [CartProducts!]!
     datePurchased: Date
+    paymentMethod: String
+    paymentStatus: String
+    paymentId: String
+    totalAmount: Float
     id: ID
   }
 
@@ -170,6 +174,7 @@ export const typeDefs = gql`
     ): Cart!
     deleteProductFromCart(id: ID!): Cart!
     createProductReview(productId: ID!, userRate: Int!): Product!
-    createOrder: Order!
+    createOrder(paymentMethod: String!, paymentId: String, totalAmount: Float!): Order!
+    updateOrderPaymentStatus(orderId: ID!, paymentStatus: String!): Order!
   }
 `;

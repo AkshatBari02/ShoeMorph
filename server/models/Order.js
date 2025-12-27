@@ -33,6 +33,24 @@ const orderSchema = mongoose.Schema({
   datePurchased: {
     type: Date,
   },
+  paymentMethod: {
+    type: String,
+    enum: ['PayPal', 'COD'],
+    required: true,
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['Pending', 'Paid', 'Failed'],
+    default: 'Pending',
+  },
+  paymentId: {
+    type: String,
+    default: null,
+  },
+  totalAmount: {
+    type: Number,
+    required: true,
+  },
 });
 
 orderSchema.pre('save', async function () {

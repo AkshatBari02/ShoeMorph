@@ -6,6 +6,10 @@ const GET_USER_ORDER = gql`
       id
       purchasedBy
       datePurchased
+      paymentMethod
+      paymentStatus
+      paymentId
+      totalAmount
       orderProducts {
         productId
         productPrice
@@ -23,6 +27,10 @@ const GET_ALL_ORDERS = gql`
       id
       purchasedBy
       datePurchased
+      paymentMethod
+      paymentStatus
+      paymentId
+      totalAmount
       orderProducts {
         productId
         productPrice
