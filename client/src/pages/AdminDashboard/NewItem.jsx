@@ -25,7 +25,7 @@ const NewItem = () => {
     size: '',
   };
 
-  const { onChange, values, onSubmit } = useForm(onSubmitHandler, initialState);
+  const { onChange, values, onSubmit, resetForm } = useForm(onSubmitHandler, initialState);
 
   const uploadImage = async (file) => {
     const formData = new FormData();
@@ -50,6 +50,12 @@ const NewItem = () => {
     {
       onCompleted() {
         setSuccess(true);
+        resetForm();
+        setPublicId(''); 
+        setImageUrl('');
+        setTimeout(() => {
+          setSuccess(false);
+        }, 3000);
       },
 
       variables: values,
