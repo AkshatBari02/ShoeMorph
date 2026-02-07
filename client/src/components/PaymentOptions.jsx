@@ -2,29 +2,27 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
 import MuiError from '../assets/mui/Alert';
+import config from '../config';
 
-// Move Client ID to environment variable for security
-const PAYPAL_CLIENT_ID = process.env.REACT_APP_PAYPAL_CLIENT_ID || 'AYzFDJyKk0ZwgrJZ-qq7MZEQPXedvLlbZuWc2l1D_qBXVp2iXbVIJfCAmTXuVoMWOEgX2mz6Lk-Hrc7F';
 
 const initialOptions = {
-  'client-id': PAYPAL_CLIENT_ID,
+  'client-id': config.paypal.clientId,
   currency: 'USD',
   intent: 'capture',
   components: 'buttons',
   'disable-funding': 'credit,card',
+  'enable-funding': 'paypal',
 };
 
 const PaymentOptions = ({ totalAmount, onPaymentComplete, disabled }) => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentError, setPaymentError] = useState('');
-  // const [sdkReady, setSdkReady] = useState(false);
 
   const handleCODPayment = () => {
     onPaymentComplete('COD', null);
   };
 
   return (
-    <PayPalScriptProvider options={initialOptions}>
       <Wrapper>
         <Title>Select Payment Method</Title>
         
@@ -86,6 +84,10 @@ const PaymentOptions = ({ totalAmount, onPaymentComplete, disabled }) => {
 
         {paymentMethod === 'PayPal' && (
           <PayPalSection>
+            <PayPalScriptProvider options={initialOptions} onError={(err) => {
+              console.error('PayPal Script Error:', err);
+              setPaymentError('Failed to load PayPal. Please try again later or choose Cash on Delivery.');
+            }}>
             <PayPalInfo>
               <InfoIcon>ℹ️</InfoIcon>
               <InfoText>
@@ -110,39 +112,54 @@ const PaymentOptions = ({ totalAmount, onPaymentComplete, disabled }) => {
                   return Promise.reject(new Error('Invalid amount'));
                 }
                 
-                console.log('Creating PayPal order...', { totalAmount });
                 return actions.order.create({
-                  purchase_units: [
-                    {
-                      amount: {
-                        currency_code: 'USD',
-                        value: totalAmount.toFixed(2),
-                      },
-                      description: `ShoeMorph Order`,
+                  purchase_units: [{
+                    amount: {
+                      currency_code: 'USD',
+                      value: totalAmount.toFixed(2),
                     },
-                  ],
+                    description: 'ShoeMorph Order',
+                  }],
+                  application_context: {
+                    brand_name: 'ShoeMorph',
+                    shipping_preference: 'NO_SHIPPING', // Remove shipping address requirement
+                    user_action: 'PAY_NOW',
+                  },
+                }).then((orderId) => {
+                  return orderId;
+                }).catch((err) => {
+                  setPaymentError('Failed to create order. Please try again.');
+                  throw err;
                 });
               }}
               onApprove={async (data, actions) => {
-                console.log('Payment approved, capturing...', data);
                 try {
                   const details = await actions.order.capture();
-                  console.log('Payment captured successfully:', details);
-                  onPaymentComplete('PayPal', details.id);
+
+                  const transactionId = details.id || details.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+                  onPaymentComplete('PayPal', transactionId);
                 } catch (error) {
-                  console.error('Payment capture error:', error);
                   setPaymentError(`Payment failed: ${error.message || 'Unknown error'}. Please try again.`);
                 }
               }}
               onError={(err) => {
                 console.error('PayPal Button Error:', err);
-                setPaymentError('Payment error occurred. Please try again or use Cash on Delivery.');
+                // More specific error messages
+                let errorMsg = 'Payment failed. ';
+                if (err.message?.includes('popup')) {
+                  errorMsg += 'Please allow popups for this site.';
+                } else if (err.message?.includes('window')) {
+                  errorMsg += 'Popup was closed. Please try again.';
+                } else {
+                  errorMsg += 'Please try again or use Cash on Delivery.';
+                }
+                setPaymentError(errorMsg);
               }}
               onCancel={(data) => {
-                console.log('Payment cancelled by user:', data);
                 setPaymentError('Payment was cancelled. You can try again when ready.');
               }}
             />
+            </PayPalScriptProvider>
           </PayPalSection>
         )}
 
@@ -150,7 +167,6 @@ const PaymentOptions = ({ totalAmount, onPaymentComplete, disabled }) => {
           <SelectPrompt>👆 Please select a payment method to continue</SelectPrompt>
         )}
       </Wrapper>
-    </PayPalScriptProvider>
   );
 };
 
