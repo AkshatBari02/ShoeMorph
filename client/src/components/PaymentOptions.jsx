@@ -3,107 +3,96 @@ import styled from 'styled-components';
 import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
 import MuiError from '../assets/mui/Alert';
 
+// Move Client ID to environment variable for security
+const PAYPAL_CLIENT_ID = process.env.REACT_APP_PAYPAL_CLIENT_ID || 'AYzFDJyKk0ZwgrJZ-qq7MZEQPXedvLlbZuWc2l1D_qBXVp2iXbVIJfCAmTXuVoMWOEgX2mz6Lk-Hrc7F';
+
+const initialOptions = {
+  'client-id': PAYPAL_CLIENT_ID,
+  currency: 'USD',
+  intent: 'capture',
+  components: 'buttons',
+  'disable-funding': 'credit,card',
+};
+
 const PaymentOptions = ({ totalAmount, onPaymentComplete, disabled }) => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentError, setPaymentError] = useState('');
-  const [sdkReady, setSdkReady] = useState(false);
-
-  // Replace with your actual Sandbox Client ID from Business Account
-  const PAYPAL_CLIENT_ID = 'AfrXaZQPFKRhOm_ZX0CztR8lsWS_B_OVTb7--Qw9Y5IlyASyB9z7mr6uxj18NhXLV0BdFiiXZhMcZekF';
+  // const [sdkReady, setSdkReady] = useState(false);
 
   const handleCODPayment = () => {
     onPaymentComplete('COD', null);
   };
 
-  const initialOptions = {
-    'client-id': PAYPAL_CLIENT_ID,
-    currency: 'USD',
-    intent: 'capture',
-    'enable-funding': 'venmo',
-    'disable-funding': 'card,credit',
-    'data-sdk-integration-source': 'integrationbuilder_sc',
-  };
-
   return (
-    <Wrapper>
-      <Title>Select Payment Method</Title>
-      
-      <PaymentMethodContainer>
-        <PaymentMethodButton
-          type="button"
-          selected={paymentMethod === 'COD'}
-          onClick={() => {
-            setPaymentMethod('COD');
-            setPaymentError('');
-          }}
-          disabled={disabled}
-        >
-          <MethodIcon>💵</MethodIcon>
-          <MethodText>
-            <MethodTitle>Cash on Delivery</MethodTitle>
-            <MethodDesc>Pay when you receive the order</MethodDesc>
-          </MethodText>
-        </PaymentMethodButton>
-
-        <PaymentMethodButton
-          type="button"
-          selected={paymentMethod === 'PayPal'}
-          onClick={() => {
-            setPaymentMethod('PayPal');
-            setPaymentError('');
-          }}
-          disabled={disabled}
-        >
-          <MethodIcon>💳</MethodIcon>
-          <MethodText>
-            <MethodTitle>PayPal</MethodTitle>
-            <MethodDesc>Pay securely with PayPal</MethodDesc>
-          </MethodText>
-        </PaymentMethodButton>
-      </PaymentMethodContainer>
-
-      {paymentError && (
-        <MuiError type="error" value={paymentError} />
-      )}
-
-      {paymentMethod === 'COD' && (
-        <CODSection>
-          <CODInfo>
-            <InfoIcon>ℹ️</InfoIcon>
-            <InfoText>
-              Your order will be delivered to your address. Please keep the exact amount ready for payment.
-            </InfoText>
-          </CODInfo>
-          <ConfirmButton 
+    <PayPalScriptProvider options={initialOptions}>
+      <Wrapper>
+        <Title>Select Payment Method</Title>
+        
+        <PaymentMethodContainer>
+          <PaymentMethodButton
             type="button"
-            onClick={handleCODPayment}
+            selected={paymentMethod === 'COD'}
+            onClick={() => {
+              setPaymentMethod('COD');
+              setPaymentError('');
+            }}
             disabled={disabled}
           >
-            Place Order (Cash on Delivery)
-          </ConfirmButton>
-        </CODSection>
-      )}
+            <MethodIcon>💵</MethodIcon>
+            <MethodText>
+              <MethodTitle>Cash on Delivery</MethodTitle>
+              <MethodDesc>Pay when you receive the order</MethodDesc>
+            </MethodText>
+          </PaymentMethodButton>
 
-      {paymentMethod === 'PayPal' && (
-        <PayPalSection>
-          <PayPalInfo>
-            <InfoIcon>ℹ️</InfoIcon>
-            <InfoText>
-              <strong>Sandbox Test Mode:</strong> Use your PayPal sandbox personal account to complete payment.
-            </InfoText>
-          </PayPalInfo>
-          
-          <TestCredentials>
-            <h4>🧪 Sandbox Test Accounts</h4>
-            <CredentialRow>
-              <strong>Buyer (Personal):</strong> sb-lypgw47825137@personal.example.com
-            </CredentialRow>
-            <CredentialRow>
-              <strong>Get Password:</strong> <a href="https://developer.paypal.com/dashboard/accounts" target="_blank" rel="noopener noreferrer">PayPal Developer Dashboard</a>
-            </CredentialRow>
-          </TestCredentials>
+          <PaymentMethodButton
+            type="button"
+            selected={paymentMethod === 'PayPal'}
+            onClick={() => {
+              setPaymentMethod('PayPal');
+              setPaymentError('');
+            }}
+            disabled={disabled}
+          >
+            <MethodIcon>💳</MethodIcon>
+            <MethodText>
+              <MethodTitle>PayPal</MethodTitle>
+              <MethodDesc>Pay securely with PayPal</MethodDesc>
+            </MethodText>
+          </PaymentMethodButton>
+        </PaymentMethodContainer>
 
-          <PayPalScriptProvider options={initialOptions}>
+        {paymentError && (
+          <MuiError type="error" value={paymentError} />
+        )}
+
+        {paymentMethod === 'COD' && (
+          <CODSection>
+            <CODInfo>
+              <InfoIcon>ℹ️</InfoIcon>
+              <InfoText>
+                Your order will be delivered to your address. Please keep the exact amount ready for payment.
+              </InfoText>
+            </CODInfo>
+            <ConfirmButton 
+              type="button"
+              onClick={handleCODPayment}
+              disabled={disabled}
+            >
+              Place Order (Cash on Delivery)
+            </ConfirmButton>
+          </CODSection>
+        )}
+
+        {paymentMethod === 'PayPal' && (
+          <PayPalSection>
+            <PayPalInfo>
+              <InfoIcon>ℹ️</InfoIcon>
+              <InfoText>
+                <strong>Sandbox Test Mode:</strong> Use your PayPal sandbox personal account to complete payment.
+              </InfoText>
+            </PayPalInfo>
+            
             <PayPalButtons
               style={{
                 layout: 'vertical',
@@ -115,6 +104,12 @@ const PaymentOptions = ({ totalAmount, onPaymentComplete, disabled }) => {
               disabled={disabled}
               forceReRender={[totalAmount]}
               createOrder={(data, actions) => {
+                // Validate amount
+                if (!totalAmount || totalAmount <= 0) {
+                  setPaymentError('Invalid order amount');
+                  return Promise.reject(new Error('Invalid amount'));
+                }
+                
                 console.log('Creating PayPal order...', { totalAmount });
                 return actions.order.create({
                   purchase_units: [
@@ -123,15 +118,9 @@ const PaymentOptions = ({ totalAmount, onPaymentComplete, disabled }) => {
                         currency_code: 'USD',
                         value: totalAmount.toFixed(2),
                       },
-                      description: `ShoeMorph Order - Total: $${totalAmount.toFixed(2)}`,
+                      description: `ShoeMorph Order`,
                     },
                   ],
-                  application_context: {
-                    shipping_preference: 'NO_SHIPPING',
-                    brand_name: 'ShoeMorph',
-                    locale: 'en-US',
-                    user_action: 'PAY_NOW',
-                  },
                 });
               }}
               onApprove={async (data, actions) => {
@@ -147,29 +136,21 @@ const PaymentOptions = ({ totalAmount, onPaymentComplete, disabled }) => {
               }}
               onError={(err) => {
                 console.error('PayPal Button Error:', err);
-                setPaymentError(`PayPal Error: ${err.message || 'Connection issue'}. Please refresh and try again.`);
+                setPaymentError('Payment error occurred. Please try again or use Cash on Delivery.');
               }}
               onCancel={(data) => {
                 console.log('Payment cancelled by user:', data);
                 setPaymentError('Payment was cancelled. You can try again when ready.');
               }}
-              onInit={(data, actions) => {
-                console.log('PayPal SDK initialized');
-                setSdkReady(true);
-              }}
             />
-          </PayPalScriptProvider>
+          </PayPalSection>
+        )}
 
-          {!sdkReady && (
-            <LoadingText>⏳ Loading PayPal SDK...</LoadingText>
-          )}
-        </PayPalSection>
-      )}
-
-      {!paymentMethod && (
-        <SelectPrompt>👆 Please select a payment method to continue</SelectPrompt>
-      )}
-    </Wrapper>
+        {!paymentMethod && (
+          <SelectPrompt>👆 Please select a payment method to continue</SelectPrompt>
+        )}
+      </Wrapper>
+    </PayPalScriptProvider>
   );
 };
 
