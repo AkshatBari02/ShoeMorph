@@ -3,7 +3,7 @@
 
 const config = {
   // GraphQL API URL
-  graphqlUrl: process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql',
+  graphqlUrl: process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:4000/graphql',
   
   // Foot Measurement API URL
   footMeasurementApiUrl: process.env.REACT_APP_FOOT_MEASUREMENT_API_URL || 'http://localhost:8000',
