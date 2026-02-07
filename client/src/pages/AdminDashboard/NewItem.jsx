@@ -9,6 +9,7 @@ import { useMutation } from '@apollo/client';
 import { CREATE_PRODUCT } from '../../graphql/Mutations/productMutation';
 import { GET_PRODUCTS } from '../../graphql/Queries/productQueries';
 import MuiError from '../../assets/mui/Alert';
+import config from '../../config';
 const NewItem = () => {
   const [publicId, setPublicId] = useState();
   const [loading, setLoading] = useState(false);
@@ -30,11 +31,11 @@ const NewItem = () => {
   const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append('file', file[0]);
-    formData.append('upload_preset', 'wrhqjxmr');
+    formData.append('upload_preset', config.cloudinary.uploadPreset);
     setLoading(true);
     try {
       const response = await axios.post(
-        'https://api.cloudinary.com/v1_1/dsrhwv8to/image/upload',
+        config.cloudinary.uploadUrl,
         formData
       );
       setLoading(false);
@@ -86,7 +87,7 @@ const NewItem = () => {
             ) : (
               <Image
                 className='image'
-                cloudName='dsrhwv8to'
+                cloudName={config.cloudinary.cloudName}
                 publicId={publicId}
               />
             )}

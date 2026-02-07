@@ -14,6 +14,7 @@ import {
 import ScrollToTop from './components/ScrollToTop';
 import { BrowserRouter } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material';
+import config from './config';
 
 const theme = createTheme({
   palette: {
@@ -24,7 +25,7 @@ const theme = createTheme({
 });
 
 const httpLink = createHttpLink({
-  uri: 'http://localhost:5000/graphql',
+  uri: config.graphqlUrl,
 });
 
 const authLink = setContext(() => {

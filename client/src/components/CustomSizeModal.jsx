@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { mobile } from '../responsive';
+import config from '../config';
 
 const CustomSizeModal = ({ isOpen, onClose, onSizeCalculated }) => {
   const [leftFootImage, setLeftFootImage] = useState(null);
@@ -36,7 +37,7 @@ const CustomSizeModal = ({ isOpen, onClose, onSizeCalculated }) => {
     const formData = new FormData();
     formData.append('file', imageFile);
 
-    const response = await fetch('http://localhost:8000/measure-foot', {
+    const response = await fetch(`${config.footMeasurementApiUrl}/measure-foot`, {
       method: 'POST',
       body: formData,
     });

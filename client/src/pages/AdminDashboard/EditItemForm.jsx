@@ -8,6 +8,7 @@ import Loading from '../../assets/mui/Loading';
 import { FormRow } from '../../components';
 import { UPDATE_PRODUCT } from '../../graphql/Mutations/productMutation';
 import { useForm } from '../../utils/customHooks';
+import config from '../../config';
 
 const EditItemForm = ({ product }) => {
   const [loading, setLoading] = useState(false);
@@ -44,11 +45,11 @@ const EditItemForm = ({ product }) => {
   const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append('file', file[0]);
-    formData.append('upload_preset', 'wrhqjxmr');
+    formData.append('upload_preset', config.cloudinary.uploadPreset);
     setLoading(true);
     try {
       const response = await axios.post(
-        'https://api.cloudinary.com/v1_1/dsrhwv8to/image/upload',
+        config.cloudinary.uploadUrl,
         formData
       );
       setLoading(false);
@@ -85,7 +86,7 @@ const EditItemForm = ({ product }) => {
               ) : imageUrl ? (
                 <Image
                   className='image'
-                  cloudName='dsrhwv8to'
+                  cloudName={config.cloudinary.cloudName}
                   publicId={publicId}
                 />
               ) : null}
