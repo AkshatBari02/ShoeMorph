@@ -7,7 +7,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import typeDefs from './graphql/typeDefs.js';
+import { typeDefs } from './graphql/typeDefs.js';
 import resolvers from './graphql/resolvers/index.js';
 import { verifyToken } from './utils/auth.js';
 
@@ -60,11 +60,9 @@ const startServer = async () => {
     typeDefs,
     resolvers,
     context: ({ req, res }) => {
-      const token = req.headers.authorization?.split(' ')[1] || '';
-      let user = null;
-      if (token) {
-        user = verifyToken(token);
-      }
+      const authHeader = req.headers.authorization || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : '';
+      const user = verifyToken(token);
       return { req, res, user };
     },
     introspection: true, // Enable for GraphQL playground
