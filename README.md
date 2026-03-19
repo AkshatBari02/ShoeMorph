@@ -39,6 +39,8 @@ This is particularly helpful for individuals who have feet of different sizes du
 - **Styled Components** - CSS-in-JS styling
 - **Material UI** - UI component library
 - **React Router** - Navigation
+- **Three.js** - Vector math utilities used for AR/world-space distance calculation
+- **WebXR Device API** - Browser AR session, hit-test, and live true-depth measurement support
 
 ### Backend
 - **Node.js** - Runtime environment
