@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { mobile } from '../responsive';
 import config from '../config';
+import AIFootMeasurement from './AIFootMeasurement';
 
 const CustomSizeModal = ({ isOpen, onClose, onSizeCalculated }) => {
   const [leftFootImage, setLeftFootImage] = useState(null);
@@ -13,6 +14,63 @@ const CustomSizeModal = ({ isOpen, onClose, onSizeCalculated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [calculatedSize, setCalculatedSize] = useState(null);
+  const [activeMethod, setActiveMethod] = useState('upload');
+  const [arSupport, setArSupport] = useState({ checking: true, supported: false, reason: '' });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const detectARSupport = async () => {
+      if (!window.isSecureContext) {
+        if (!cancelled) {
+          setArSupport({
+            checking: false,
+            supported: false,
+            reason: 'AI camera requires HTTPS secure context.',
+          });
+        }
+        return;
+      }
+
+      if (!navigator.xr?.isSessionSupported) {
+        if (!cancelled) {
+          setArSupport({
+            checking: false,
+            supported: false,
+            reason: 'WebXR AR is not available on this browser or device.',
+          });
+        }
+        return;
+      }
+
+      try {
+        const supported = await navigator.xr.isSessionSupported('immersive-ar');
+        if (!cancelled) {
+          setArSupport({
+            checking: false,
+            supported,
+            reason: supported
+              ? ''
+              : 'This device does not support immersive AR. Please use image upload.',
+          });
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setArSupport({
+            checking: false,
+            supported: false,
+            reason: 'Unable to verify AR support. Please use image upload.',
+          });
+        }
+      }
+    };
+
+    detectARSupport();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleImageUpload = (event, foot) => {
     const file = event.target.files[0];
@@ -97,7 +155,16 @@ const CustomSizeModal = ({ isOpen, onClose, onSizeCalculated }) => {
     setCalculatedSize(null);
     setError('');
     setLoading(false);
+    setActiveMethod('upload');
     onClose();
+  };
+
+  const handleAIMeasurementComplete = (sizeData) => {
+    setCalculatedSize({
+      left: Number(sizeData.left).toFixed(2),
+      right: Number(sizeData.right).toFixed(2),
+    });
+    setError('');
   };
 
   if (!isOpen) return null;
@@ -113,62 +180,101 @@ const CustomSizeModal = ({ isOpen, onClose, onSizeCalculated }) => {
         </ModalHeader>
 
         <ModalContent>
+          <TabContainer>
+            <MethodTab
+              type="button"
+              active={activeMethod === 'upload'}
+              onClick={() => {
+                setActiveMethod('upload');
+                setError('');
+              }}
+            >
+              Upload Images
+            </MethodTab>
+            <MethodTab
+              type="button"
+              active={activeMethod === 'ai'}
+              disabled={arSupport.checking || !arSupport.supported}
+              onClick={() => {
+                if (arSupport.supported) {
+                  setActiveMethod('ai');
+                  setError('');
+                }
+              }}
+            >
+              AI Camera (AR)
+            </MethodTab>
+          </TabContainer>
+
           <InfoAlert>
-            Please upload clear images of both feet placed on white paper with a
-            reference object (credit card or A4 paper) for accurate measurements.
+            {activeMethod === 'upload'
+              ? 'Upload clear images of both feet placed on white paper with a reference object (credit card or A4 paper).'
+              : 'Live AI camera works only on devices that support WebXR AR. Show left foot first, then right foot.'}
           </InfoAlert>
+
+          {!arSupport.checking && !arSupport.supported && (
+            <ArWarning>{arSupport.reason} Upload method remains available.</ArWarning>
+          )}
 
           {error && <ErrorAlert>{error}</ErrorAlert>}
 
-          <UploadGrid>
-            {/* Left Foot Upload */}
-            <UploadSection>
-              <SubTitle>Left Foot Image</SubTitle>
-              <UploadCard>
-                <input
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  id="left-foot-upload"
-                  type="file"
-                  onChange={(e) => handleImageUpload(e, 'left')}
-                />
-                <label htmlFor="left-foot-upload" style={{ cursor: 'pointer', width: '100%' }}>
-                  {leftFootPreview ? (
-                    <PreviewImage src={leftFootPreview} alt="Left foot" />
-                  ) : (
-                    <UploadPlaceholder>
-                      <CloudUploadIcon style={{ fontSize: 48, color: '#999' }} />
-                      <PlaceholderText>Click to upload left foot image</PlaceholderText>
-                    </UploadPlaceholder>
-                  )}
-                </label>
-              </UploadCard>
-            </UploadSection>
+          {activeMethod === 'upload' ? (
+            <UploadGrid>
+              <UploadSection>
+                <SubTitle>Left Foot Image</SubTitle>
+                <UploadCard>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="left-foot-upload"
+                    type="file"
+                    onChange={(e) => handleImageUpload(e, 'left')}
+                  />
+                  <label htmlFor="left-foot-upload" style={{ cursor: 'pointer', width: '100%' }}>
+                    {leftFootPreview ? (
+                      <PreviewImage src={leftFootPreview} alt="Left foot" />
+                    ) : (
+                      <UploadPlaceholder>
+                        <CloudUploadIcon style={{ fontSize: 48, color: '#999' }} />
+                        <PlaceholderText>Click to upload left foot image</PlaceholderText>
+                      </UploadPlaceholder>
+                    )}
+                  </label>
+                </UploadCard>
+              </UploadSection>
 
-            {/* Right Foot Upload */}
-            <UploadSection>
-              <SubTitle>Right Foot Image</SubTitle>
-              <UploadCard>
-                <input
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  id="right-foot-upload"
-                  type="file"
-                  onChange={(e) => handleImageUpload(e, 'right')}
-                />
-                <label htmlFor="right-foot-upload" style={{ cursor: 'pointer', width: '100%' }}>
-                  {rightFootPreview ? (
-                    <PreviewImage src={rightFootPreview} alt="Right foot" />
-                  ) : (
-                    <UploadPlaceholder>
-                      <CloudUploadIcon style={{ fontSize: 48, color: '#999' }} />
-                      <PlaceholderText>Click to upload right foot image</PlaceholderText>
-                    </UploadPlaceholder>
-                  )}
-                </label>
-              </UploadCard>
-            </UploadSection>
-          </UploadGrid>
+              <UploadSection>
+                <SubTitle>Right Foot Image</SubTitle>
+                <UploadCard>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="right-foot-upload"
+                    type="file"
+                    onChange={(e) => handleImageUpload(e, 'right')}
+                  />
+                  <label htmlFor="right-foot-upload" style={{ cursor: 'pointer', width: '100%' }}>
+                    {rightFootPreview ? (
+                      <PreviewImage src={rightFootPreview} alt="Right foot" />
+                    ) : (
+                      <UploadPlaceholder>
+                        <CloudUploadIcon style={{ fontSize: 48, color: '#999' }} />
+                        <PlaceholderText>Click to upload right foot image</PlaceholderText>
+                      </UploadPlaceholder>
+                    )}
+                  </label>
+                </UploadCard>
+              </UploadSection>
+            </UploadGrid>
+          ) : (
+            <AICameraContainer>
+              {arSupport.supported ? (
+                <AIFootMeasurement onMeasurementComplete={handleAIMeasurementComplete} />
+              ) : (
+                <ArWarning>AI camera is unavailable on this device. Please use Upload Images.</ArWarning>
+              )}
+            </AICameraContainer>
+          )}
 
           {calculatedSize && (
             <ResultBox>
@@ -183,18 +289,15 @@ const CustomSizeModal = ({ isOpen, onClose, onSizeCalculated }) => {
           <CancelButton onClick={handleClose} disabled={loading}>
             Cancel
           </CancelButton>
-          {!calculatedSize ? (
+          {activeMethod === 'upload' && !calculatedSize && (
             <CalculateButton
               onClick={handleCalculateSize}
               disabled={loading || !leftFootImage || !rightFootImage}
             >
               {loading ? 'Calculating...' : 'Calculate Size'}
             </CalculateButton>
-          ) : (
-            <ConfirmButton onClick={handleConfirm}>
-              Confirm
-            </ConfirmButton>
           )}
+          {calculatedSize && <ConfirmButton onClick={handleConfirm}>Confirm</ConfirmButton>}
         </ModalActions>
       </ModalContainer>
     </Overlay>
@@ -278,12 +381,48 @@ const ErrorAlert = styled.div`
   color: #c62828;
 `;
 
+const TabContainer = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+`;
+
+const MethodTab = styled.button`
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  background: ${(props) => (props.active ? 'var(--clr-mocha-3)' : '#fff')};
+  color: ${(props) => (props.active ? '#fff' : '#333')};
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+`;
+
+const ArWarning = styled.div`
+  background: #fff6e9;
+  border-left: 4px solid #f59e0b;
+  color: #8a5300;
+  border-radius: 4px;
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+`;
+
 const UploadGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
   ${mobile({ gridTemplateColumns: '1fr', gap: '1rem' })}
+`;
+
+const AICameraContainer = styled.div`
+  margin-bottom: 1rem;
 `;
 
 const UploadSection = styled.div``;
