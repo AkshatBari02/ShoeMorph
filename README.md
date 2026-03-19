@@ -15,6 +15,9 @@ This is particularly helpful for individuals who have feet of different sizes du
 
 ### For Customers
 - **AI-Powered Foot Measurement**: Upload photos of your feet and get accurate size measurements using computer vision
+- **Live AI Camera Measurement (WebXR AR)**: Use guided live camera measurement with on-screen point marking for length, width, and optional height
+- **Smart Measurement Method Selection**: Choose between Upload Images and AI Camera directly inside the Custom Size modal
+- **AR-Aware Fallback**: If WebXR AR is not supported on a device/browser, the modal automatically keeps the Upload Images workflow available
 - **Custom Size Selection**: Order shoes with different sizes for left and right feet
 - **Product Browsing**: Filter products by brand, size, color, and price
 - **Shopping Cart**: Add products to cart and manage orders
@@ -170,15 +173,31 @@ ShoeMorph/
 
 ## How Foot Measurement Works
 
+ShoeMorph supports two measurement paths in the Custom Size modal:
+
+### 1) Upload Images (API-based)
 1. User uploads photos of their left and right feet
 2. Images are sent to the Foot Measurement API
 3. OpenCV processes the images:
-   - Preprocessing and clustering
-   - Edge detection
-   - Bounding box calculation
-   - Size calculation based on reference
+    - Preprocessing and clustering
+    - Edge detection
+    - Bounding box calculation
+    - Size calculation based on reference
 4. Measurements are returned in centimeters
-5. User can select custom sizes for each foot
+
+### 2) AI Camera (Client-side Live Measurement)
+1. User starts AI Live Camera from the Custom Size modal
+2. The app checks device/browser WebXR AR support and camera availability
+3. Live video feed is shown with guided overlay for foot placement
+4. User measures left and right foot by marking points for:
+    - Length (heel to toe)
+    - Width (left edge to right edge)
+    - Optional height (side profile)
+5. The app confirms both-foot measurements and returns left/right values to the size workflow
+
+### Fallback Behavior
+- On unsupported devices or browsers, AI Camera is disabled and users continue with Upload Images.
+- This keeps the measurement flow available across desktop and mobile environments.
 
 ## API Endpoints
 
