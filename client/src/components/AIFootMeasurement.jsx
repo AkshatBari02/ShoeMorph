@@ -23,7 +23,7 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
   const xrRefSpaceRef = useRef(null);
   const xrTransientHitTestSourceRef = useRef(null);
   const xrFrameRef = useRef(null);
-  const autoAppliedRef = useRef({ length: false, width: false, height: false });
+  const autoAppliedRef = useRef(false);
 
   const [supportStatus, setSupportStatus] = useState({
     checking: true,
@@ -40,24 +40,14 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
   const [xrStatusMessage, setXrStatusMessage] = useState('');
 
   const [currentFoot, setCurrentFoot] = useState('left');
-  const [measurementMode, setMeasurementMode] = useState('length');
-  const [anglePrompt, setAnglePrompt] = useState('top');
 
   const [points, setPoints] = useState({
     lengthStart: null,
     lengthEnd: null,
-    widthStart: null,
-    widthEnd: null,
-    heightStart: null,
-    heightEnd: null,
   });
   const [worldPoints, setWorldPoints] = useState({
     lengthStart: null,
     lengthEnd: null,
-    widthStart: null,
-    widthEnd: null,
-    heightStart: null,
-    heightEnd: null,
   });
 
   const [leftFootMeasurement, setLeftFootMeasurement] = useState(null);
@@ -65,10 +55,6 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
   const [proposedPoints, setProposedPoints] = useState({
     lengthStart: null,
     lengthEnd: null,
-    widthStart: null,
-    widthEnd: null,
-    heightStart: null,
-    heightEnd: null,
   });
 
   const getGuideRect = useCallback(() => {
@@ -173,33 +159,18 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
     return (v1.distanceTo(v2) * 100).toFixed(2);
   }, []);
 
-  const calculateDistanceCm = useCallback(
-    (dimension) => {
-      const keyMap = {
-        length: ['lengthStart', 'lengthEnd'],
-        width: ['widthStart', 'widthEnd'],
-        height: ['heightStart', 'heightEnd'],
-      };
+  const calculateDistanceCm = useCallback(() => {
+    const start = points.lengthStart;
+    const end = points.lengthEnd;
+    if (!start || !end) return null;
 
-      const keys = keyMap[dimension];
-      if (!keys) return null;
+    if (measurementSource === 'xr-metric') {
+      const worldDistance = calculateDistanceCmWorld(worldPoints.lengthStart, worldPoints.lengthEnd);
+      if (worldDistance) return worldDistance;
+    }
 
-      const [startKey, endKey] = keys;
-      const start = points[startKey];
-      const end = points[endKey];
-      if (!start || !end) return null;
-
-      if (measurementSource === 'xr-metric') {
-        const worldStart = worldPoints[startKey];
-        const worldEnd = worldPoints[endKey];
-        const worldDistance = calculateDistanceCmWorld(worldStart, worldEnd);
-        if (worldDistance) return worldDistance;
-      }
-
-      return calculateDistanceCm2D(start, end);
-    },
-    [points, worldPoints, measurementSource, calculateDistanceCm2D, calculateDistanceCmWorld]
-  );
+    return calculateDistanceCm2D(start, end);
+  }, [points, worldPoints, measurementSource, calculateDistanceCm2D, calculateDistanceCmWorld]);
 
   const drawPoint = (ctx, point, color, label) => {
     ctx.beginPath();
@@ -283,17 +254,10 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     drawGuide(ctx, canvas);
 
-    const colorMap = {
-      length: '#22C55E',
-      width: '#FF5C5C',
-      height: '#8E44AD',
-    };
-    const lengthCm = calculateDistanceCm('length');
-    const widthCm = calculateDistanceCm('width');
-    const heightCm = calculateDistanceCm('height');
+    const lengthCm = calculateDistanceCm();
 
-    if (points.lengthStart) drawPoint(ctx, points.lengthStart, colorMap.length, '1');
-    if (points.lengthEnd) drawPoint(ctx, points.lengthEnd, colorMap.length, '2');
+    if (points.lengthStart) drawPoint(ctx, points.lengthStart, '#22C55E', '1');
+    if (points.lengthEnd) drawPoint(ctx, points.lengthEnd, '#22C55E', '2');
     if (!points.lengthStart && proposedPoints.lengthStart) {
       drawPoint(ctx, proposedPoints.lengthStart, 'rgba(34, 197, 94, 0.55)', 'A');
     }
@@ -302,31 +266,7 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
     }
     if (points.lengthStart && points.lengthEnd) {
       drawLengthHighlight(ctx, points.lengthStart, points.lengthEnd);
-      drawLine(ctx, points.lengthStart, points.lengthEnd, colorMap.length, `Length: ${lengthCm} cm`);
-    }
-
-    if (points.widthStart) drawPoint(ctx, points.widthStart, colorMap.width, '1');
-    if (points.widthEnd) drawPoint(ctx, points.widthEnd, colorMap.width, '2');
-    if (!points.widthStart && proposedPoints.widthStart) {
-      drawPoint(ctx, proposedPoints.widthStart, 'rgba(255, 92, 92, 0.55)', 'A');
-    }
-    if (!points.widthEnd && proposedPoints.widthEnd) {
-      drawPoint(ctx, proposedPoints.widthEnd, 'rgba(255, 92, 92, 0.55)', 'A');
-    }
-    if (points.widthStart && points.widthEnd) {
-      drawLine(ctx, points.widthStart, points.widthEnd, colorMap.width, `Width: ${widthCm} cm`);
-    }
-
-    if (points.heightStart) drawPoint(ctx, points.heightStart, colorMap.height, '1');
-    if (points.heightEnd) drawPoint(ctx, points.heightEnd, colorMap.height, '2');
-    if (!points.heightStart && proposedPoints.heightStart) {
-      drawPoint(ctx, proposedPoints.heightStart, 'rgba(142, 68, 173, 0.55)', 'A');
-    }
-    if (!points.heightEnd && proposedPoints.heightEnd) {
-      drawPoint(ctx, proposedPoints.heightEnd, 'rgba(142, 68, 173, 0.55)', 'A');
-    }
-    if (points.heightStart && points.heightEnd) {
-      drawLine(ctx, points.heightStart, points.heightEnd, colorMap.height, `Height: ${heightCm} cm`);
+      drawLine(ctx, points.lengthStart, points.lengthEnd, '#22C55E', `Length: ${lengthCm} cm`);
     }
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.68)';
@@ -334,24 +274,16 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 18px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(`Show ${currentFoot.toUpperCase()} foot - ${measurementMode.toUpperCase()} mode`, canvas.width / 2, 24);
+    ctx.fillText(`Show ${currentFoot.toUpperCase()} foot - LENGTH mode`, canvas.width / 2, 24);
     ctx.font = '14px Arial';
     ctx.fillStyle = '#d9e8ff';
-    ctx.fillText(
-      anglePrompt === 'top'
-        ? 'Top angle: keep full foot inside guide and mark points precisely.'
-        : 'Side angle: rotate to side profile and mark floor-to-top for foot height.',
-      canvas.width / 2,
-      46
-    );
+    ctx.fillText('Top angle: keep full foot inside guide and mark heel and toe precisely.', canvas.width / 2, 46);
     ctx.font = '12px Arial';
     ctx.fillStyle = '#9be7ff';
     ctx.textAlign = 'right';
     ctx.fillText(`Mode: ${measurementSource === 'xr-metric' ? 'True depth' : '2D fallback'}`, canvas.width - 12, 24);
   }, [
-    anglePrompt,
     currentFoot,
-    measurementMode,
     points,
     proposedPoints,
     drawLengthHighlight,
@@ -445,29 +377,25 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
   }, []);
 
   const isProposalPlausible = useCallback((proposal) => {
-    if (!proposal?.lengthStart || !proposal?.lengthEnd || !proposal?.widthStart || !proposal?.widthEnd) {
+    if (!proposal?.lengthStart || !proposal?.lengthEnd) {
       return { ok: false, reason: 'incomplete proposal' };
     }
 
     const lengthCm = parseFloat(calculateDistanceCm2D(proposal.lengthStart, proposal.lengthEnd));
-    const widthCm = parseFloat(calculateDistanceCm2D(proposal.widthStart, proposal.widthEnd));
 
-    if (!Number.isFinite(lengthCm) || !Number.isFinite(widthCm)) {
+    if (!Number.isFinite(lengthCm)) {
       return { ok: false, reason: 'invalid numeric values' };
     }
 
-    const widthRatio = widthCm / lengthCm;
     const plausibleLength = lengthCm >= 18 && lengthCm <= 34;
-    const plausibleWidth = widthCm >= 6 && widthCm <= 16;
-    const plausibleRatio = widthRatio >= 0.24 && widthRatio <= 0.58;
 
-    if (plausibleLength && plausibleWidth && plausibleRatio) {
-      return { ok: true, lengthCm, widthCm };
+    if (plausibleLength) {
+      return { ok: true, lengthCm };
     }
 
     return {
       ok: false,
-      reason: `rejected L=${lengthCm.toFixed(1)} W=${widthCm.toFixed(1)} ratio=${widthRatio.toFixed(2)}`,
+      reason: `rejected L=${lengthCm.toFixed(1)}`,
     };
   }, [calculateDistanceCm2D]);
 
@@ -598,76 +526,12 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
 
     if (!lengthStart || !lengthEnd) return null;
 
-    // Width endpoints: use trimmed normal projections around mid-foot to avoid ankle/background outliers.
-    const lx = lengthEnd.x - lengthStart.x;
-    const ly = lengthEnd.y - lengthStart.y;
-    const len = Math.sqrt(lx * lx + ly * ly) || 1;
-    const uxLen = lx / len;
-    const uyLen = ly / len;
-    const nx = -ly / len;
-    const ny = lx / len;
-    const mx = (lengthStart.x + lengthEnd.x) / 2;
-    const my = (lengthStart.y + lengthEnd.y) / 2;
-    const lengthAxisSamples = [];
-    for (let i = 0; i < contour.length; i += sampleStep) {
-      const p = contour[i];
-      const t = (p.x - lengthStart.x) * uxLen + (p.y - lengthStart.y) * uyLen;
-      if (t < 0 || t > len) continue;
-      const nProj = (p.x - mx) * nx + (p.y - my) * ny;
-      lengthAxisSamples.push({ p, t, nProj });
-    }
-
-    if (lengthAxisSamples.length < 10) return null;
-
-    // First pass: center band where forefoot width is more stable than heel/ankle transitions.
-    const centerBand = lengthAxisSamples.filter((s) => s.t >= len * 0.28 && s.t <= len * 0.78);
-    const widthCandidates = centerBand.length >= 8 ? centerBand : lengthAxisSamples;
-
-    widthCandidates.sort((a, b) => a.nProj - b.nProj);
-    const lowIndex = Math.max(0, Math.floor(widthCandidates.length * 0.12));
-    const highIndex = Math.min(widthCandidates.length - 1, Math.floor(widthCandidates.length * 0.88));
-    let widthStart = widthCandidates[lowIndex]?.p || null;
-    let widthEnd = widthCandidates[highIndex]?.p || null;
-
-    // Second pass guard: when width is still too large, tighten to a narrower mid-foot band.
-    if (widthStart && widthEnd) {
-      const roughLengthCm = parseFloat(calculateDistanceCm2D(lengthStart, lengthEnd));
-      const roughWidthCm = parseFloat(calculateDistanceCm2D(widthStart, widthEnd));
-      const roughRatio = roughWidthCm / roughLengthCm;
-
-      if (Number.isFinite(roughRatio) && roughRatio > 0.62) {
-        const tighterBand = lengthAxisSamples.filter((s) => s.t >= len * 0.38 && s.t <= len * 0.70);
-        if (tighterBand.length >= 8) {
-          tighterBand.sort((a, b) => a.nProj - b.nProj);
-          const tightLow = Math.max(0, Math.floor(tighterBand.length * 0.2));
-          const tightHigh = Math.min(tighterBand.length - 1, Math.floor(tighterBand.length * 0.8));
-          widthStart = tighterBand[tightLow]?.p || widthStart;
-          widthEnd = tighterBand[tightHigh]?.p || widthEnd;
-        }
-      }
-    }
-
-    // Height proposal for side mode: floor-to-top by y extrema near guide center.
-    const centerX = (x0 + x1) / 2;
-    let topPoint = null;
-    let bottomPoint = null;
-    for (let i = 0; i < contour.length; i += sampleStep) {
-      const p = contour[i];
-      if (Math.abs(p.x - centerX) > (x1 - x0) * 0.35) continue;
-      if (!topPoint || p.y < topPoint.y) topPoint = p;
-      if (!bottomPoint || p.y > bottomPoint.y) bottomPoint = p;
-    }
-
     return {
       lengthStart,
       lengthEnd,
-      widthStart,
-      widthEnd,
-      heightStart: bottomPoint,
-      heightEnd: topPoint,
       score: contour.length,
     };
-  }, [autoDetectEnabled, getGuideRect, calculateDistanceCm2D]);
+  }, [autoDetectEnabled, getGuideRect]);
 
   const getWorldPointFromXR = useCallback(() => {
     if (measurementSource !== 'xr-metric') return null;
@@ -829,7 +693,7 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
     }
   };
 
-  const snapToProposalIfNear = useCallback((point, modeKey) => {
+  const snapToProposalIfNear = useCallback((point) => {
     const guide = getGuideRect();
     if (!guide) return point;
 
@@ -840,16 +704,8 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
     };
 
     const candidates = [];
-    if (modeKey === 'length') {
-      if (proposedPoints.lengthStart) candidates.push(proposedPoints.lengthStart);
-      if (proposedPoints.lengthEnd) candidates.push(proposedPoints.lengthEnd);
-    } else if (modeKey === 'width') {
-      if (proposedPoints.widthStart) candidates.push(proposedPoints.widthStart);
-      if (proposedPoints.widthEnd) candidates.push(proposedPoints.widthEnd);
-    } else {
-      if (proposedPoints.heightStart) candidates.push(proposedPoints.heightStart);
-      if (proposedPoints.heightEnd) candidates.push(proposedPoints.heightEnd);
-    }
+    if (proposedPoints.lengthStart) candidates.push(proposedPoints.lengthStart);
+    if (proposedPoints.lengthEnd) candidates.push(proposedPoints.lengthEnd);
 
     let nearest = null;
     let nearestD2 = Number.POSITIVE_INFINITY;
@@ -893,56 +749,28 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
         x: (clientX - rect.left) * scaleX,
         y: (clientY - rect.top) * scaleY,
       };
-      const modeKey = measurementMode === 'length' ? 'length' : (measurementMode === 'width' ? 'width' : 'height');
-      const point = snapToProposalIfNear(rawPoint, modeKey);
+      const point = snapToProposalIfNear(rawPoint);
       const worldPoint = getWorldPointFromXR();
 
       setPoints((prev) => {
-        if (measurementMode === 'length') {
-          if (!prev.lengthStart) {
-            setWorldPoints((wp) => ({ ...wp, lengthStart: worldPoint }));
-            return { ...prev, lengthStart: point };
-          }
-          if (!prev.lengthEnd) {
-            setWorldPoints((wp) => ({ ...wp, lengthEnd: worldPoint }));
-            return { ...prev, lengthEnd: point };
-          }
-          return prev;
+        if (!prev.lengthStart) {
+          setWorldPoints((wp) => ({ ...wp, lengthStart: worldPoint }));
+          return { ...prev, lengthStart: point };
         }
-
-        if (measurementMode === 'width') {
-          if (!prev.widthStart) {
-            setWorldPoints((wp) => ({ ...wp, widthStart: worldPoint }));
-            return { ...prev, widthStart: point };
-          }
-          if (!prev.widthEnd) {
-            setWorldPoints((wp) => ({ ...wp, widthEnd: worldPoint }));
-            return { ...prev, widthEnd: point };
-          }
-          return prev;
-        }
-
-        if (!prev.heightStart) {
-          setWorldPoints((wp) => ({ ...wp, heightStart: worldPoint }));
-          return { ...prev, heightStart: point };
-        }
-        if (!prev.heightEnd) {
-          setWorldPoints((wp) => ({ ...wp, heightEnd: worldPoint }));
-          return { ...prev, heightEnd: point };
+        if (!prev.lengthEnd) {
+          setWorldPoints((wp) => ({ ...wp, lengthEnd: worldPoint }));
+          return { ...prev, lengthEnd: point };
         }
         return prev;
       });
     },
-    [measurementMode, getWorldPointFromXR, snapToProposalIfNear]
+    [getWorldPointFromXR, snapToProposalIfNear]
   );
 
   useEffect(() => {
     if (!cameraReady || !autoDetectEnabled) return;
 
-    const isCurrentModeIncomplete =
-      (measurementMode === 'length' && (!points.lengthStart || !points.lengthEnd)) ||
-      (measurementMode === 'width' && (!points.widthStart || !points.widthEnd)) ||
-      (measurementMode === 'height' && (!points.heightStart || !points.heightEnd));
+    const isCurrentModeIncomplete = !points.lengthStart || !points.lengthEnd;
 
     if (!isCurrentModeIncomplete) return;
 
@@ -961,10 +789,10 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
         ...proposal,
       }));
       setAutoDetectInfo(
-        `Auto contour detected (${proposal.score} samples): L~${proposalCheck.lengthCm.toFixed(1)} W~${proposalCheck.widthCm.toFixed(1)} cm`
+        `Auto contour detected (${proposal.score} samples): L~${proposalCheck.lengthCm.toFixed(1)} cm`
       );
 
-      if (measurementMode === 'length' && !autoAppliedRef.current.length) {
+      if (!autoAppliedRef.current) {
         setPoints((prev) => {
           if (prev.lengthStart || prev.lengthEnd) return prev;
           return {
@@ -973,51 +801,15 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
             lengthEnd: proposal.lengthEnd,
           };
         });
-        autoAppliedRef.current.length = true;
-      }
-
-      if (measurementMode === 'width' && !autoAppliedRef.current.width) {
-        setPoints((prev) => {
-          if (prev.widthStart || prev.widthEnd) return prev;
-          return {
-            ...prev,
-            widthStart: proposal.widthStart,
-            widthEnd: proposal.widthEnd,
-          };
-        });
-        autoAppliedRef.current.width = true;
-      }
-
-      if (measurementMode === 'height' && !autoAppliedRef.current.height) {
-        setPoints((prev) => {
-          if (prev.heightStart || prev.heightEnd) return prev;
-          return {
-            ...prev,
-            heightStart: proposal.heightStart,
-            heightEnd: proposal.heightEnd,
-          };
-        });
-        autoAppliedRef.current.height = true;
+        autoAppliedRef.current = true;
       }
     }, 700);
 
     return () => clearInterval(timer);
-  }, [cameraReady, autoDetectEnabled, measurementMode, points, detectFootProposal, isProposalPlausible]);
+  }, [cameraReady, autoDetectEnabled, points, detectFootProposal, isProposalPlausible]);
 
   const undoLastPoint = () => {
     setPoints((prev) => {
-      if (measurementMode === 'height') {
-        if (prev.heightEnd) return { ...prev, heightEnd: null };
-        if (prev.heightStart) return { ...prev, heightStart: null };
-        return prev;
-      }
-
-      if (measurementMode === 'width') {
-        if (prev.widthEnd) return { ...prev, widthEnd: null };
-        if (prev.widthStart) return { ...prev, widthStart: null };
-        return prev;
-      }
-
       if (prev.lengthEnd) return { ...prev, lengthEnd: null };
       if (prev.lengthStart) return { ...prev, lengthStart: null };
       return prev;
@@ -1028,43 +820,25 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
     setPoints({
       lengthStart: null,
       lengthEnd: null,
-      widthStart: null,
-      widthEnd: null,
-      heightStart: null,
-      heightEnd: null,
     });
     setWorldPoints({
       lengthStart: null,
       lengthEnd: null,
-      widthStart: null,
-      widthEnd: null,
-      heightStart: null,
-      heightEnd: null,
     });
-    setMeasurementMode('length');
-    setAnglePrompt('top');
     setProposedPoints({
       lengthStart: null,
       lengthEnd: null,
-      widthStart: null,
-      widthEnd: null,
-      heightStart: null,
-      heightEnd: null,
     });
-    autoAppliedRef.current = { length: false, width: false, height: false };
+    autoAppliedRef.current = false;
   };
 
   const handleSaveCurrentFoot = () => {
-    const length = calculateDistanceCm('length');
-    const width = calculateDistanceCm('width');
-    const height = calculateDistanceCm('height');
+    const length = calculateDistanceCm();
 
-    if (!length || !width) return;
+    if (!length) return;
 
     const measurement = {
       length,
-      width,
-      height: height || null,
     };
 
     if (currentFoot === 'left') {
@@ -1099,9 +873,7 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
   }, [cameraReady, stopXRSession]);
 
   const lengthMeasured = !!(points.lengthStart && points.lengthEnd);
-  const widthMeasured = !!(points.widthStart && points.widthEnd);
-  const heightMeasured = !!(points.heightStart && points.heightEnd);
-  const canSaveCurrentFoot = lengthMeasured && widthMeasured;
+  const canSaveCurrentFoot = lengthMeasured;
   const bothFeetMeasured = !!(leftFootMeasurement && rightFootMeasurement);
 
   if (supportStatus.checking) {
@@ -1146,8 +918,7 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
             AI Live Camera (WebXR AR)
           </InstructionTitle>
           <InstructionText>
-            Show left foot first. Mark heel and toe for length, left-right edges for width, and optional
-            side profile points for height. Then move to right foot.
+            Show left foot first and mark heel and toe for foot length. Then move to right foot.
           </InstructionText>
           <StartButton type="button" onClick={startCamera} disabled={isLoading}>
             {isLoading ? 'Starting Camera...' : 'Start AI Camera'}
@@ -1168,7 +939,7 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
                 checked={autoDetectEnabled}
                 onChange={(e) => setAutoDetectEnabled(e.target.checked)}
               />
-              Auto detect points from contour (manual override with Undo + tap)
+              Auto detect length points from contour (manual override with Undo + tap)
             </AutoDetectLabel>
             {autoDetectInfo && <AutoDetectInfo>{autoDetectInfo}</AutoDetectInfo>}
           </AutoDetectRow>
@@ -1199,54 +970,16 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
               Undo
             </UndoButton>
 
-            {measurementMode === 'length' && lengthMeasured && (
-              <ModeButton onClick={() => setMeasurementMode('width')}>Measure Width</ModeButton>
-            )}
-
-            {measurementMode === 'width' && widthMeasured && (
-              <ModeButton
-                onClick={() => {
-                  setMeasurementMode('height');
-                  setAnglePrompt('side');
-                }}
-              >
-                Measure Height (Optional)
-              </ModeButton>
-            )}
-
-            {measurementMode === 'height' && (
-              <ModeButton
-                onClick={() => {
-                  setMeasurementMode('width');
-                  setAnglePrompt('top');
-                }}
-              >
-                Back To Top Angle
-              </ModeButton>
-            )}
-
             <SaveButton onClick={handleSaveCurrentFoot} disabled={!canSaveCurrentFoot}>
               {currentFoot === 'left' ? 'Save Left And Next Foot' : 'Save Right Foot'}
             </SaveButton>
           </ControlButtons>
 
-          {(lengthMeasured || widthMeasured || heightMeasured) && (
+          {lengthMeasured && (
             <LiveMeasurements>
-              {lengthMeasured && (
-                <MeasurementBadge color="#22C55E">
-                  L: {calculateDistanceCm('length')} cm
-                </MeasurementBadge>
-              )}
-              {widthMeasured && (
-                <MeasurementBadge color="#FF5C5C">
-                  W: {calculateDistanceCm('width')} cm
-                </MeasurementBadge>
-              )}
-              {heightMeasured && (
-                <MeasurementBadge color="#8E44AD">
-                  H: {calculateDistanceCm('height')} cm
-                </MeasurementBadge>
-              )}
+              <MeasurementBadge color="#22C55E">
+                L: {calculateDistanceCm()} cm
+              </MeasurementBadge>
             </LiveMeasurements>
           )}
         </>
@@ -1259,8 +992,7 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
             <ResultItem>
               <ResultLabel>Left:</ResultLabel>
               <ResultValue>
-                {leftFootMeasurement.length} cm (L), {leftFootMeasurement.width} cm (W)
-                {leftFootMeasurement.height ? `, ${leftFootMeasurement.height} cm (H)` : ''}
+                {leftFootMeasurement.length} cm
               </ResultValue>
             </ResultItem>
           )}
@@ -1268,8 +1000,7 @@ const AIFootMeasurement = ({ onMeasurementComplete }) => {
             <ResultItem>
               <ResultLabel>Right:</ResultLabel>
               <ResultValue>
-                {rightFootMeasurement.length} cm (L), {rightFootMeasurement.width} cm (W)
-                {rightFootMeasurement.height ? `, ${rightFootMeasurement.height} cm (H)` : ''}
+                {rightFootMeasurement.length} cm
               </ResultValue>
             </ResultItem>
           )}
@@ -1504,16 +1235,6 @@ const UndoButton = styled.button`
   display: flex;
   align-items: center;
   cursor: pointer;
-`;
-
-const ModeButton = styled.button`
-  padding: 0.7rem 0.95rem;
-  border: none;
-  border-radius: 8px;
-  background: #374151;
-  color: #fff;
-  cursor: pointer;
-  font-weight: 500;
 `;
 
 const SaveButton = styled.button`
